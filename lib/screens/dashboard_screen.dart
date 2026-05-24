@@ -34,29 +34,31 @@ class DashboardScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'CodeGo',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF06B6D4),
-                              letterSpacing: 2.0,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'CodeGo',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF06B6D4),
+                                letterSpacing: 2.0,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            context.tr('TIN CÔNG NGHỆ', 'TECH NEWS'),
-                            style: const TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              letterSpacing: 1.0,
+                            const SizedBox(height: 2),
+                            Text(
+                              context.tr('TIN CÔNG NGHỆ', 'TECH NEWS'),
+                              style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 1.0,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       // Actions Row (Sync, Settings & Streak)
                       Row(
@@ -183,7 +185,8 @@ class DashboardScreen extends StatelessWidget {
                       final isSelected = provider.selectedNewsCategory == cat;
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                                  label: Text(
+                        child: FilterChip(
+                          label: Text(
                             (cat == 'All' ? context.tr('TẤT CẢ', 'ALL') : cat).toUpperCase(),
                             style: TextStyle(
                               fontSize: 11,

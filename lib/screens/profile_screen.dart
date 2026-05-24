@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_provider.dart';
@@ -23,6 +24,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+  bool _isUploadingAvatar = false;
+
+  void _pickAndUploadAvatar(BuildContext context, AppProvider provider) async {
+    final picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+      if (image == null) return;
+
+      setState(() {
+        _isUploadingAvatar = true;
+      });
+
+      final res = await provider.uploadAvatar(image.path);
+      
+      setState(() {
+        _isUploadingAvatar = false;
+      });
+
+      if (res['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.tr('Tải ảnh đại diện thành công!', 'Avatar uploaded successfully!'),
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        _showErrorSnackbar(res['message'] ?? context.tr('Lỗi upload ảnh', 'Upload failed'));
+      }
+    } catch (e) {
+      setState(() {
+        _isUploadingAvatar = false;
+      });
+      _showErrorSnackbar('${context.tr('Lỗi:', 'Error:')} $e');
+    }
+  }
+
+  void _showEditProfileDialog(BuildContext context, AppProvider provider) {
+    final user = provider.userInfo ?? {};
+    final nameController = TextEditingController(text: user['name'] ?? '');
+    final emailController = TextEditingController(text: user['email'] ?? '');
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF161F30),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            context.tr('Chỉnh Sửa Hồ Sơ', 'Edit Profile'),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  validator: (val) => val == null || val.trim().isEmpty ? context.tr('Nhập tên hiển thị', 'Enter display name') : null,
+                  decoration: InputDecoration(
+                    labelText: context.tr('Họ & Tên', 'Display Name'),
+                    labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: emailController,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  validator: (val) => val == null || !val.contains('@') ? context.tr('Email không hợp lệ', 'Invalid email') : null,
+                  decoration: InputDecoration(
+                    labelText: context.tr('Địa chỉ email', 'Email Address'),
+                    labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(context.tr('HỦY', 'CANCEL'), style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold)),
+            ),
+            TextButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() != true) return;
+                Navigator.pop(context);
+                provider.updateProfile(
+                  name: nameController.text.trim(),
+                  email: emailController.text.trim(),
+                ).then((res) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        res['success'] == true 
+                            ? context.tr('Cập nhật hồ sơ thành công!', 'Profile updated successfully!')
+                            : (res['message'] ?? context.tr('Cập nhật hồ sơ thất bại', 'Profile update failed')),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
+                    ),
+                  );
+                });
+              },
+              child: Text(context.tr('LƯU', 'SAVE'), style: const TextStyle(color: Color(0xFF06B6D4), fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -292,41 +415,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 10),
         // Avatar Header Card
         GlassmorphicCard(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          child: Column(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: const Color(0xFF06B6D4).withOpacity(0.2),
-                child: Text(
-                  (user['name'] ?? 'U').substring(0, 1).toUpperCase(),
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF06B6D4)),
+              // Avatar Section with Pick Image
+              GestureDetector(
+                onTap: () => _pickAndUploadAvatar(context, provider),
+                child: Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    CircleAvatar(
+                      radius: 36,
+                      backgroundColor: const Color(0xFF06B6D4).withOpacity(0.2),
+                      backgroundImage: (user['avatar'] != null && user['avatar'].toString().isNotEmpty)
+                          ? NetworkImage(user['avatar'].toString())
+                          : null,
+                      child: (user['avatar'] == null || user['avatar'].toString().isEmpty)
+                          ? Text(
+                              (user['name'] ?? 'U').substring(0, 1).toUpperCase(),
+                              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF06B6D4)),
+                            )
+                          : null,
+                    ),
+                    if (_isUploadingAvatar)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF06B6D4)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF06B6D4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.camera_alt, size: 12, color: Colors.black),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              // Name & Email
-              Text(
-                user['name'] ?? 'User Name',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                user['email'] ?? 'user@example.com',
-                style: const TextStyle(fontSize: 12, color: Colors.white38),
-              ),
-              const SizedBox(height: 16),
-              // Level indicator badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF06B6D4).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF06B6D4), width: 1.0),
-                ),
-                child: Text(
-                  '${context.tr('CẤP ĐỘ', 'LEVEL')} ${user['level'] ?? 1}',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF06B6D4)),
+              const SizedBox(width: 16),
+              // User Info details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            user['name'] ?? 'User Name',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, color: Colors.white70, size: 16),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => _showEditProfileDialog(context, provider),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user['email'] ?? 'user@example.com',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Colors.white38),
+                    ),
+                    const SizedBox(height: 8),
+                    // Level badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF06B6D4).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF06B6D4).withOpacity(0.4), width: 0.8),
+                      ),
+                      child: Text(
+                        '${context.tr('CẤP ĐỘ', 'LEVEL')} ${user['level'] ?? 1}',
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF06B6D4)),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

@@ -76,5 +76,9 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ứng dụng cần truy cập thư viện ảnh để cho phép bạn chọn ảnh đại diện.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Ứng dụng cần truy cập máy ảnh để cho phép bạn chụp ảnh đại diện mới.</string>
 </dict>
 </plist>

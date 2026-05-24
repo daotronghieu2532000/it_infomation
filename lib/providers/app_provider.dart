@@ -171,6 +171,49 @@ class AppProvider with ChangeNotifier {
     return res;
   }
 
+  Future<Map<String, dynamic>> updateProfile({String? name, String? email}) async {
+    if (!_isLoggedIn || _userInfo == null) {
+      return {'success': false, 'message': 'User not logged in'};
+    }
+    final userId = int.tryParse(_userInfo!['user_id']?.toString() ?? '') ?? 0;
+    if (userId <= 0) {
+      return {'success': false, 'message': 'Invalid user ID'};
+    }
+
+    final res = await _apiService.updateProfile(userId, name: name, email: email);
+    if (res['success'] == true) {
+      final updatedUser = Map<String, dynamic>.from(_userInfo!);
+      if (name != null) updatedUser['name'] = name;
+      if (email != null) updatedUser['email'] = email;
+      
+      _userInfo = updatedUser;
+      await _apiService.saveUserInfo(updatedUser);
+      notifyListeners();
+    }
+    return res;
+  }
+
+  Future<Map<String, dynamic>> uploadAvatar(String imagePath) async {
+    if (!_isLoggedIn || _userInfo == null) {
+      return {'success': false, 'message': 'User not logged in'};
+    }
+    final userId = int.tryParse(_userInfo!['user_id']?.toString() ?? '') ?? 0;
+    if (userId <= 0) {
+      return {'success': false, 'message': 'Invalid user ID'};
+    }
+
+    final res = await _apiService.uploadAvatar(userId, imagePath);
+    if (res['success'] == true) {
+      final updatedUser = Map<String, dynamic>.from(_userInfo!);
+      updatedUser['avatar'] = res['avatar_url'];
+      
+      _userInfo = updatedUser;
+      await _apiService.saveUserInfo(updatedUser);
+      notifyListeners();
+    }
+    return res;
+  }
+
   // ============================================
   // XỬ LÝ TRUY VẤN DỮ LIỆU
   // ============================================

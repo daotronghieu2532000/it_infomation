@@ -490,4 +490,63 @@ class ApiService {
       return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
     }
   }
+
+  /// Cập nhật thông tin User (name, email)
+  Future<Map<String, dynamic>> updateProfile(int userId, {String? name, String? email}) async {
+    try {
+      final headers = await _getHeaders();
+      final Map<String, dynamic> body = {
+        'user_id': userId,
+      };
+      if (name != null) body['name'] = name;
+      if (email != null) body['email'] = email;
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/update_profile.php'),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'message': data['message'], 'user': data['data']};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Cập nhật thông tin thất bại'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi cập nhật thông tin: $e'};
+    }
+  }
+
+  /// Upload ảnh đại diện
+  Future<Map<String, dynamic>> uploadAvatar(int userId, String imagePath) async {
+    try {
+      final headers = await _getHeaders();
+      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/upload_avatar.php'));
+      
+      // Copy headers (Authorization Bearer token)
+      headers.forEach((key, value) {
+        request.headers[key] = value;
+      });
+      
+      request.fields['user_id'] = userId.toString();
+      request.files.add(await http.MultipartFile.fromPath('avatar', imagePath));
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'message': data['message'],
+          'avatar_url': data['data']['avatar_url']
+        };
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Upload avatar thất bại'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi upload avatar: $e'};
+    }
+  }
 }

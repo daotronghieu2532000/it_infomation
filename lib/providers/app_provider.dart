@@ -569,7 +569,7 @@ class AppProvider with ChangeNotifier {
 
 extension LocalizationExtension on BuildContext {
   String tr(String vi, String en) {
-    final isEnglish = Provider.of<AppProvider>(this).isEnglish;
+    final isEnglish = Provider.of<AppProvider>(this, listen: false).isEnglish;
     return isEnglish ? en : vi;
   }
 }

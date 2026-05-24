@@ -234,27 +234,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       });
     } else {
+      final username = _usernameController.text.trim();
+      final password = _passwordController.text;
       provider.register(
-        _usernameController.text.trim(),
+        username,
         _emailController.text.trim(),
-        _passwordController.text,
+        password,
         _nameController.text.trim(),
       ).then((res) {
         if (res['success'] == true) {
-          // Auto switch to login
-          setState(() {
-            _isLoginView = true;
-            _passwordController.clear();
-          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                context.tr('Đăng ký thành công! Vui lòng đăng nhập.', 'Registration successful! Please log in.'),
+                context.tr('Đăng ký thành công! Đang tự động đăng nhập...', 'Registration successful! Logging in...'),
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
               backgroundColor: Colors.green,
             ),
           );
+          // Auto login
+          provider.login(username, password).then((loginRes) {
+            if (loginRes['success'] != true) {
+              setState(() {
+                _isLoginView = true;
+                _passwordController.clear();
+              });
+              _showErrorSnackbar(loginRes['message'] ?? context.tr('Đăng nhập tự động thất bại', 'Automatic login failed'));
+            }
+          });
         } else {
           _showErrorSnackbar(res['message'] ?? context.tr('Đăng ký thất bại', 'Registration failed'));
         }

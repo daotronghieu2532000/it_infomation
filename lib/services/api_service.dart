@@ -1,0 +1,415 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../models/article.dart';
+import '../models/github_repo.dart';
+import '../models/prompt.dart';
+import '../models/dev_workflow.dart';
+import '../models/ai_tool.dart';
+
+class ApiService {
+  // Thay đổi URL này thành IP server/hosting của bạn.
+  static String baseUrl = 'https://codego.io.vn/api';
+  
+  final _storage = const FlutterSecureStorage();
+  
+  static const String _keyAccessToken = 'access_token';
+  static const String _keyUserToken = 'user_token';
+  static const String _keyUserInfo = 'user_info';
+  
+  // Singleton pattern
+  static final ApiService _instance = ApiService._internal();
+  factory ApiService() => _instance;
+  ApiService._internal();
+
+  // ============================================
+  // QUẢN LÝ SECURE TOKENS & THÔNG TIN USER
+  // ============================================
+  
+  Future<void> _secureWrite(String key, String value) async {
+    try {
+      await _storage.write(
+        key: key, 
+        value: value,
+        iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+      );
+    } catch (e) {
+      // Bắt lỗi iOS keychain duplicate item bug (-25299)
+      try {
+        await _storage.delete(key: key);
+        await _storage.write(
+          key: key, 
+          value: value,
+          iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+        );
+      } catch (_) {}
+    }
+  }
+
+  Future<void> saveAccessToken(String token) async {
+    await _secureWrite(_keyAccessToken, token);
+  }
+
+  Future<String?> getAccessToken() async {
+    return await _storage.read(key: _keyAccessToken);
+  }
+
+  Future<void> saveUserToken(String token) async {
+    await _secureWrite(_keyUserToken, token);
+  }
+
+  Future<String?> getUserToken() async {
+    return await _storage.read(key: _keyUserToken);
+  }
+
+  Future<void> saveUserInfo(Map<String, dynamic> userInfo) async {
+    await _secureWrite(_keyUserInfo, jsonEncode(userInfo));
+  }
+
+  Future<Map<String, dynamic>?> getUserInfo() async {
+    final infoStr = await _storage.read(key: _keyUserInfo);
+    if (infoStr == null) return null;
+    try {
+      return jsonDecode(infoStr) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> logout() async {
+    await _storage.delete(key: _keyUserToken);
+    await _storage.delete(key: _keyUserInfo);
+  }
+
+  Future<bool> isLoggedIn() async {
+    final token = await getUserToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  // ============================================
+  // XÁC THỰC HỆ THỐNG & USER (AUTHENTICATION)
+  // ============================================
+
+  /// Bước 1: Lấy Token Hệ Thống (Client App Token)
+  Future<String> fetchSystemAccessToken({
+    String apiKey = 'codego_api_key_2025',
+    String apiSecret = 'codego_secret_2025',
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/get_token.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'api_key': apiKey,
+          'api_secret': apiSecret,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        final token = data['data']['access_token'] as String;
+        await saveAccessToken(token);
+        return token;
+      } else {
+        throw Exception(data['message'] ?? 'Failed to get system token');
+      }
+    } catch (e) {
+      throw Exception('Lỗi kết nối xác thực hệ thống: $e');
+    }
+  }
+
+  /// Helper lấy Authorization Header
+  Future<Map<String, String>> _getHeaders({bool requireUser = false}) async {
+    var token = await getAccessToken();
+    if (token == null) {
+      // Nếu chưa có, lấy mới tự động
+      token = await fetchSystemAccessToken();
+    }
+    
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
+    if (requireUser) {
+      final userToken = await getUserToken();
+      if (userToken != null) {
+        headers['User-Token'] = userToken;
+      }
+    } else {
+      // Đính kèm nếu có (dành cho API lấy tin check bookmark)
+      final userToken = await getUserToken();
+      if (userToken != null) {
+        headers['User-Token'] = userToken;
+      }
+    }
+
+    return headers;
+  }
+
+  /// Đăng nhập User
+  Future<Map<String, dynamic>> login(String username, String password) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/login.php'),
+        headers: headers,
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+          'platform': 'ios'
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        final userToken = data['data']['user_token'] as String;
+        final userInfo = data['data']['user'] as Map<String, dynamic>;
+        
+        await saveUserToken(userToken);
+        await saveUserInfo(userInfo);
+        
+        return {'success': true, 'user': userInfo};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Đăng nhập thất bại'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi đăng nhập: $e'};
+    }
+  }
+
+  /// Đăng ký User
+  Future<Map<String, dynamic>> register(String username, String email, String password, String name) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/register.php'),
+        headers: headers,
+        body: jsonEncode({
+          'username': username,
+          'email': email,
+          'password': password,
+          'name': name,
+          'country': 'VN'
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'message': data['message']};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Đăng ký thất bại'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi đăng ký: $e'};
+    }
+  }
+
+  // ============================================
+  // TRUY VẤN DỮ LIỆU TECHFLOW (BUSINESS ENDPOINTS)
+  // ============================================
+
+  /// Lấy danh sách tin tức công nghệ
+  Future<List<Article>> getTechNews({String category = '', String type = '', int page = 1, int limit = 10}) async {
+    try {
+      final headers = await _getHeaders();
+      final url = Uri.parse('$baseUrl/get_tech_news.php?category=$category&type=$type&page=$page&limit=$limit');
+      
+      final response = await http.get(url, headers: headers);
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        final List list = data['data']['articles'] as List;
+        return list.map((json) => Article.fromJson(json)).toList();
+      } else {
+        throw Exception(data['message'] ?? 'Failed to fetch news');
+      }
+    } catch (e) {
+      print('Error getTechNews: $e');
+      return [];
+    }
+  }
+
+  /// Lấy danh sách GitHub Trending Repos
+  Future<List<GitHubRepo>> getGitHubRepos({String period = 'daily', String language = ''}) async {
+    try {
+      final headers = await _getHeaders();
+      final url = Uri.parse('$baseUrl/get_github_repos.php?period=$period&language=$language');
+      
+      final response = await http.get(url, headers: headers);
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        final List list = data['data'] as List;
+        return list.map((json) => GitHubRepo.fromJson(json)).toList();
+      } else {
+        throw Exception(data['message'] ?? 'Failed to fetch repos');
+      }
+    } catch (e) {
+      print('Error getGitHubRepos: $e');
+      return [];
+    }
+  }
+
+  /// Lấy danh sách Curated Prompts
+  Future<List<CuratedPrompt>> getPrompts({String category = '', String search = ''}) async {
+    try {
+      final headers = await _getHeaders();
+      final url = Uri.parse('$baseUrl/get_prompts.php?category=$category&search=$search');
+      
+      final response = await http.get(url, headers: headers);
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        final List list = data['data'] as List;
+        return list.map((json) => CuratedPrompt.fromJson(json)).toList();
+      } else {
+        throw Exception(data['message'] ?? 'Failed to fetch prompts');
+      }
+    } catch (e) {
+      print('Error getPrompts: $e');
+      return [];
+    }
+  }
+
+  /// Lấy danh sách Dev Workflows
+  Future<List<DevWorkflow>> getDevWorkflows({String category = '', String search = ''}) async {
+    try {
+      final headers = await _getHeaders();
+      final url = Uri.parse('$baseUrl/get_workflows.php?category=$category&search=$search');
+      
+      final response = await http.get(url, headers: headers);
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        final List list = data['data'] as List;
+        return list.map((json) => DevWorkflow.fromJson(json)).toList();
+      } else {
+        throw Exception(data['message'] ?? 'Failed to fetch workflows');
+      }
+    } catch (e) {
+      print('Error getDevWorkflows: $e');
+      return [];
+    }
+  }
+
+  /// Lấy danh sách Công cụ AI (AI Tools Hub)
+  Future<List<AiTool>> getAiTools() async {
+    try {
+      final headers = await _getHeaders();
+      final url = Uri.parse('$baseUrl/get_ai_tools.php');
+      
+      final response = await http.get(url, headers: headers);
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200 && data['success'] == true) {
+        final List list = data['data'] as List;
+        return list.map((json) => AiTool.fromJson(json)).toList();
+      } else {
+        throw Exception(data['message'] ?? 'Failed to fetch AI tools');
+      }
+    } catch (e) {
+      print('Error getAiTools: $e');
+      return [];
+    }
+  }
+
+  // ============================================
+  // TƯƠNG TÁC NGƯỜI DÙNG (LIKE, BOOKMARK, COPY)
+  // ============================================
+
+  /// Thực hiện Like/Bookmark
+  Future<bool> interact({
+    required String action, // 'like', 'bookmark', 'copy'
+    required String itemType, // 'article', 'repo', 'ai_package', 'workflow', 'prompt'
+    required int itemId,
+    required bool state, // true: like/bookmark, false: unlike/unbookmark
+  }) async {
+    try {
+      final headers = await _getHeaders(requireUser: true);
+      final response = await http.post(
+        Uri.parse('$baseUrl/interact.php'),
+        headers: headers,
+        body: jsonEncode({
+          'action': action,
+          'item_type': itemType,
+          'item_id': itemId,
+          'state': state,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      return response.statusCode == 200 && data['success'] == true;
+    } catch (e) {
+      print('Error interact: $e');
+      return false;
+    }
+  }
+
+  // ============================================
+  // ĐỒNG BỘ DỮ LIỆU CHỦ ĐỘNG (TRIGGER SYNC)
+  // ============================================
+
+  /// Kích hoạt cào và đồng bộ GitHub repos mới
+  Future<Map<String, dynamic>> syncGitHubRepos() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(Uri.parse('$baseUrl/cron_sync_github.php'), headers: headers);
+      final data = jsonDecode(response.body);
+      return data;
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối đồng bộ GitHub: $e'};
+    }
+  }
+
+  /// Kích hoạt cào và đồng bộ tin tức mới
+  Future<Map<String, dynamic>> syncTechNews() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(Uri.parse('$baseUrl/cron_sync_news.php'), headers: headers);
+      final data = jsonDecode(response.body);
+      return data;
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối đồng bộ tin tức: $e'};
+    }
+  }
+
+  /// Gọi API Trợ lý AI để giải thích, debug, dịch code
+  Future<Map<String, dynamic>> callAIHelper({
+    required String code,
+    required String action,
+    String targetLanguage = 'Dart',
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/ai_helper.php'),
+        headers: headers,
+        body: jsonEncode({
+          'code': code,
+          'action': action,
+          'target_language': targetLanguage,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {
+          'success': true,
+          'result_markdown': data['data']['result_markdown'] as String,
+          'detected_language': data['data']['detected_language'] as String,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Lỗi phân tích AI',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Lỗi kết nối API AI: $e',
+      };
+    }
+  }
+}

@@ -9,6 +9,10 @@ import '../services/api_service.dart';
 class AppProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
 
+  // Language State
+  bool _isEnglish = false;
+  bool get isEnglish => _isEnglish;
+
   // User State
   bool _isLoggedIn = false;
   Map<String, dynamic>? _userInfo;
@@ -74,6 +78,7 @@ class AppProvider with ChangeNotifier {
 
   // Initialize and check login
   Future<void> init() async {
+    _isEnglish = await _apiService.getLanguagePreference();
     _isLoggedIn = await _apiService.isLoggedIn();
     if (_isLoggedIn) {
       _userInfo = await _apiService.getUserInfo();
@@ -138,6 +143,31 @@ class AppProvider with ChangeNotifier {
     // Reload data to reset bookmarks state to false
     loadAllData();
     notifyListeners();
+  }
+
+  Future<Map<String, dynamic>> deleteAccount() async {
+    _isLoadingAuth = true;
+    notifyListeners();
+    
+    final res = await _apiService.deleteAccount();
+    _isLoadingAuth = false;
+    
+    if (res['success'] == true) {
+      _isLoggedIn = false;
+      _userInfo = null;
+      
+      // Clear bookmarks lists
+      _bookmarkedArticles.clear();
+      _bookmarkedRepos.clear();
+      _bookmarkedPrompts.clear();
+      _bookmarkedWorkflows.clear();
+      
+      // Reload data to reset bookmarks state to false
+      loadAllData();
+    }
+    
+    notifyListeners();
+    return res;
   }
 
   // ============================================
@@ -527,5 +557,18 @@ class AppProvider with ChangeNotifier {
 
   void _updateBookmarkedWorkflows() {
     _bookmarkedWorkflows = _devWorkflows.where((w) => w.isBookmarked).toList();
+  }
+
+  Future<void> toggleLanguage(bool isEn) async {
+    _isEnglish = isEn;
+    await _apiService.setLanguagePreference(isEn);
+    notifyListeners();
+  }
+}
+
+extension LocalizationExtension on BuildContext {
+  String tr(String vi, String en) {
+    final isEnglish = Provider.of<AppProvider>(this).isEnglish;
+    return isEnglish ? en : vi;
   }
 }

@@ -7,6 +7,7 @@ import '../providers/app_provider.dart';
 import '../models/article.dart';
 import '../widgets/glassmorphic_card.dart';
 import '../widgets/shimmer_loader.dart';
+import 'settings_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -46,9 +47,9 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'TECH NEWS',
-                            style: TextStyle(
+                          Text(
+                            context.tr('TIN CÔNG NGHỆ', 'TECH NEWS'),
+                            style: const TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -57,9 +58,19 @@ class DashboardScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // Actions Row (Sync & Streak)
+                      // Actions Row (Sync, Settings & Streak)
                       Row(
                         children: [
+                          // Settings Button
+                          IconButton(
+                            icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 22),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 4),
                           // Sync/Refresh button
                           provider.isSyncingNews
                               ? const SizedBox(
@@ -73,7 +84,7 @@ class DashboardScreen extends StatelessWidget {
                                     provider.triggerSyncNews().then((res) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          content: Text(res['message'] ?? 'Đồng bộ tin tức hoàn tất!'),
+                                          content: Text(res['message'] ?? context.tr('Đồng bộ tin tức hoàn tất!', 'News sync completed!')),
                                           behavior: SnackBarBehavior.floating,
                                         ),
                                       );
@@ -92,7 +103,7 @@ class DashboardScreen extends StatelessWidget {
                                     const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
                                     const SizedBox(width: 4),
                                     Text(
-                                      '${provider.userInfo?['current_streak'] ?? 0} DAYS',
+                                      '${provider.userInfo?['current_streak'] ?? 0} ${context.tr('NGÀY', 'DAYS')}',
                                       style: const TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w800,
@@ -116,11 +127,11 @@ class DashboardScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                         child: Text(
-                          'WEEKLY TIÊU ĐIỂM',
-                          style: TextStyle(
+                          context.tr('TIÊU ĐIỂM TUẦN', 'WEEKLY HIGHLIGHTS'),
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF8B5CF6),
@@ -172,9 +183,8 @@ class DashboardScreen extends StatelessWidget {
                       final isSelected = provider.selectedNewsCategory == cat;
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                        child: ChoiceChip(
-                          label: Text(
-                            cat.toUpperCase(),
+                                                  label: Text(
+                            (cat == 'All' ? context.tr('TẤT CẢ', 'ALL') : cat).toUpperCase(),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
@@ -206,12 +216,12 @@ class DashboardScreen extends StatelessWidget {
                 sliver: provider.isLoadingNews
                     ? SliverToBoxAdapter(child: ShimmerLoader.listSkeleton())
                     : provider.dailyNews.isEmpty
-                        ? const SliverFillRemaining(
+                        ? SliverFillRemaining(
                             hasScrollBody: false,
                             child: Center(
                               child: Text(
-                                'Không tìm thấy bài viết nào.',
-                                style: TextStyle(color: Colors.white60),
+                                context.tr('Không tìm thấy bài viết nào.', 'No articles found.'),
+                                style: const TextStyle(color: Colors.white60),
                               ),
                             ),
                           )
@@ -467,7 +477,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
             icon: const Icon(Icons.ios_share, color: Colors.white),
             onPressed: () {
               Share.share(
-                'Đọc bài viết "${widget.article.title}" từ CodeGo TechFlow: ${widget.article.sourceUrl ?? "https://codego.app"}',
+                '${context.tr('Đọc bài viết', 'Read article')} "${widget.article.title}" ${context.tr('từ', 'from')} CodeGo TechFlow: ${widget.article.sourceUrl ?? "https://codego.app"}',
               );
             },
           ),
@@ -517,7 +527,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   Row(
                     children: [
                       Text(
-                        'Nguồn: ${widget.article.sourceName}',
+                        '${context.tr('Nguồn', 'Source')}: ${widget.article.sourceName}',
                         style: const TextStyle(fontSize: 12, color: Colors.white54, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(width: 16),
@@ -540,7 +550,7 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
                   
                   // Rich Markdown content body
                   MarkdownBody(
-                    data: widget.article.content ?? 'Đang tải nội dung bài viết...',
+                    data: widget.article.content ?? context.tr('Đang tải nội dung bài viết...', 'Loading article content...'),
                     styleSheet: MarkdownStyleSheet(
                       p: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.6),
                       h1: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, height: 1.8),

@@ -16,6 +16,7 @@ class ApiService {
   static const String _keyAccessToken = 'access_token';
   static const String _keyUserToken = 'user_token';
   static const String _keyUserInfo = 'user_info';
+  static const String _keyLanguage = 'app_language';
   
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
@@ -79,6 +80,15 @@ class ApiService {
   Future<void> logout() async {
     await _storage.delete(key: _keyUserToken);
     await _storage.delete(key: _keyUserInfo);
+  }
+
+  Future<bool> getLanguagePreference() async {
+    final lang = await _storage.read(key: _keyLanguage);
+    return lang == 'en';
+  }
+
+  Future<void> setLanguagePreference(bool isEn) async {
+    await _storage.write(key: _keyLanguage, value: isEn ? 'en' : 'vi');
   }
 
   Future<bool> isLoggedIn() async {
@@ -410,6 +420,26 @@ class ApiService {
         'success': false,
         'message': 'Lỗi kết nối API AI: $e',
       };
+    }
+  }
+
+  /// Yêu cầu xóa tài khoản
+  Future<Map<String, dynamic>> deleteAccount() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/delete_account.php'),
+        headers: headers,
+      );
+
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'message': data['message'] ?? 'Xóa tài khoản thành công'};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Xóa tài khoản thất bại'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};
     }
   }
 }

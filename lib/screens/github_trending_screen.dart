@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_provider.dart';
 import '../models/github_repo.dart';
 import '../widgets/glassmorphic_card.dart';
 import '../widgets/shimmer_loader.dart';
+import 'settings_screen.dart';
 
 class GitHubTrendingScreen extends StatelessWidget {
   const GitHubTrendingScreen({super.key});
@@ -58,43 +60,56 @@ class GitHubTrendingScreen extends StatelessWidget {
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          'GITHUB TRENDING',
-                          style: TextStyle(
+                          context.tr('GITHUB XU HƯỚNG', 'GITHUB TRENDING'),
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                             letterSpacing: 1.0,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          'Bảng xếp hạng dự án open-source bùng nổ',
-                          style: TextStyle(fontSize: 11, color: Colors.white54),
+                          context.tr('Bảng xếp hạng dự án open-source bùng nổ', 'Trending open-source projects ranking'),
+                          style: const TextStyle(fontSize: 11, color: Colors.white54),
                         ),
                       ],
                     ),
-                    // Manual GitHub Sync button
-                    provider.isSyncingGitHub
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF06B6D4)),
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.sync_rounded, color: Color(0xFF06B6D4), size: 22),
-                            onPressed: () {
-                              provider.triggerSyncGitHub().then((res) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(res['message'] ?? 'Đồng bộ GitHub hoàn tất!'),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              });
-                            },
-                          ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 22),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 4),
+                        // Manual GitHub Sync button
+                        provider.isSyncingGitHub
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF06B6D4)),
+                              )
+                            : IconButton(
+                                icon: const Icon(Icons.sync_rounded, color: Color(0xFF06B6D4), size: 22),
+                                onPressed: () {
+                                  provider.triggerSyncGitHub().then((res) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(res['message'] ?? context.tr('Đồng bộ GitHub hoàn tất!', 'GitHub sync completed!')),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  });
+                                },
+                              ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -121,9 +136,9 @@ class GitHubTrendingScreen extends StatelessWidget {
                           underline: const SizedBox(),
                           isExpanded: true,
                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                          items: const [
-                            DropdownMenuItem(value: 'daily', child: Text('HÀNG NGÀY')),
-                            DropdownMenuItem(value: 'weekly', child: Text('HÀNG TUẦN')),
+                          items: [
+                            DropdownMenuItem(value: 'daily', child: Text(context.tr('HÀNG NGÀY', 'DAILY'))),
+                            DropdownMenuItem(value: 'weekly', child: Text(context.tr('HÀNG TUẦN', 'WEEKLY'))),
                           ],
                           onChanged: (val) {
                             if (val != null) provider.setRepoFilters(period: val);
@@ -150,7 +165,7 @@ class GitHubTrendingScreen extends StatelessWidget {
                           isExpanded: true,
                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                           items: languages.map((lang) {
-                            return DropdownMenuItem(value: lang, child: Text(lang.toUpperCase()));
+                            return DropdownMenuItem(value: lang, child: Text((lang == 'All' ? context.tr('Tất cả', 'All') : lang).toUpperCase()));
                           }).toList(),
                           onChanged: (val) {
                             if (val != null) {
@@ -173,10 +188,10 @@ class GitHubTrendingScreen extends StatelessWidget {
                         child: ShimmerLoader.listSkeleton(count: 4),
                       )
                     : provider.trendingRepos.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text(
-                              'Không có repository trending nào phù hợp.',
-                              style: TextStyle(color: Colors.white60),
+                              context.tr('Không có repository trending nào phù hợp.', 'No trending repositories match your filter.'),
+                              style: const TextStyle(color: Colors.white60),
                             ),
                           )
                         : ListView.builder(
@@ -356,17 +371,17 @@ class GitHubTrendingScreen extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'Tác giả: ${repo.owner}',
+                '${context.tr('Tác giả', 'Author')}: ${repo.owner}',
                 style: const TextStyle(fontSize: 12, color: Colors.white54),
               ),
               const Divider(color: Colors.white12, height: 20),
-              const Text(
-                'GIỚI THIỆU',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF06B6D4)),
+              Text(
+                context.tr('GIỚI THIỆU', 'ABOUT'),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF06B6D4)),
               ),
               const SizedBox(height: 6),
               Text(
-                repo.description ?? 'Không có mô tả dự án.',
+                repo.description ?? context.tr('Không có mô tả dự án.', 'No project description.'),
                 style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
               ),
               const SizedBox(height: 20),
@@ -374,16 +389,23 @@ class GitHubTrendingScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        // Trực tiếp mở trình duyệt đến Github Web URL
-                        // (Mã thật dùng url_launcher: launchUrl(Uri.parse(repo.repoUrl)))
+                      onPressed: () async {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Đang chuyển hướng đến: ${repo.repoUrl}')),
-                        );
+                        final Uri url = Uri.parse(repo.repoUrl);
+                        try {
+                          if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${context.tr('Không thể mở liên kết', 'Could not open link')}: ${repo.repoUrl}')),
+                            );
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${context.tr('Lỗi', 'Error')}: $e')),
+                          );
+                        }
                       },
                       icon: const Icon(Icons.open_in_new, size: 16),
-                      label: const Text('MỞ TRÊN GITHUB'),
+                      label: Text(context.tr('MỞ TRÊN GITHUB', 'OPEN ON GITHUB')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF06B6D4),
                         foregroundColor: Colors.black,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_provider.dart';
 import '../widgets/glassmorphic_card.dart';
 import 'bookmarks_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -37,9 +39,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F19),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0B0F19),
+        elevation: 0,
+        title: Text(
+          context.tr('CÁ NHÂN', 'PROFILE'),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 1.0,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: Colors.white70),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
           child: provider.isLoggedIn 
               ? _buildProfileView(context, provider) 
               : _buildAuthView(context, provider),
@@ -78,9 +103,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Stay Ahead in the IT Universe',
-                  style: TextStyle(fontSize: 12, color: Colors.white38, fontWeight: FontWeight.w600),
+                Text(
+                  context.tr('Dẫn đầu trong vũ trụ công nghệ', 'Stay Ahead in the IT Universe'),
+                  style: const TextStyle(fontSize: 12, color: Colors.white38, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -89,7 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           // Title Auth Mode
           Text(
-            _isLoginView ? 'ĐĂNG NHẬP' : 'TẠO TÀI KHOẢN',
+            _isLoginView ? context.tr('ĐĂNG NHẬP', 'LOGIN') : context.tr('TẠO TÀI KHOẢN', 'CREATE ACCOUNT'),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0),
           ),
           const SizedBox(height: 16),
@@ -103,13 +128,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 TextFormField(
                   controller: _usernameController,
                   style: const TextStyle(color: Colors.white, fontSize: 13),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Nhập tên đăng nhập' : null,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    labelStyle: TextStyle(color: Colors.white38, fontSize: 12),
-                    prefixIcon: Icon(Icons.person_outline, color: Colors.white38),
-                    border: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
-                    focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
+                  validator: (val) => val == null || val.trim().isEmpty ? context.tr('Nhập tên đăng nhập', 'Enter username') : null,
+                  decoration: InputDecoration(
+                    labelText: context.tr('Tên đăng nhập', 'Username'),
+                    labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                    prefixIcon: const Icon(Icons.person_outline, color: Colors.white38),
+                    border: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
+                    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -120,13 +145,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   TextFormField(
                     controller: _nameController,
                     style: const TextStyle(color: Colors.white, fontSize: 13),
-                    validator: (val) => val == null || val.trim().isEmpty ? 'Nhập tên hiển thị' : null,
-                    decoration: const InputDecoration(
-                      labelText: 'Họ & Tên',
-                      labelStyle: TextStyle(color: Colors.white38, fontSize: 12),
-                      prefixIcon: Icon(Icons.badge_outlined, color: Colors.white38),
-                      border: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
-                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
+                    validator: (val) => val == null || val.trim().isEmpty ? context.tr('Nhập tên hiển thị', 'Enter display name') : null,
+                    decoration: InputDecoration(
+                      labelText: context.tr('Họ & Tên', 'Display Name'),
+                      labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                      prefixIcon: const Icon(Icons.badge_outlined, color: Colors.white38),
+                      border: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
+                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -134,13 +159,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   TextFormField(
                     controller: _emailController,
                     style: const TextStyle(color: Colors.white, fontSize: 13),
-                    validator: (val) => val == null || !val.contains('@') ? 'Email không hợp lệ' : null,
-                    decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      labelStyle: TextStyle(color: Colors.white38, fontSize: 12),
-                      prefixIcon: Icon(Icons.alternate_email, color: Colors.white38),
-                      border: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
-                      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
+                    validator: (val) => val == null || !val.contains('@') ? context.tr('Email không hợp lệ', 'Invalid email') : null,
+                    decoration: InputDecoration(
+                      labelText: context.tr('Địa chỉ email', 'Email Address'),
+                      labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                      prefixIcon: const Icon(Icons.alternate_email, color: Colors.white38),
+                      border: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
+                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -151,13 +176,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: _passwordController,
                   obscureText: true,
                   style: const TextStyle(color: Colors.white, fontSize: 13),
-                  validator: (val) => val == null || val.length < 6 ? 'Mật khẩu phải tối thiểu 6 ký tự' : null,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: TextStyle(color: Colors.white38, fontSize: 12),
-                    prefixIcon: Icon(Icons.lock_outline, color: Colors.white38),
-                    border: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
-                    focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
+                  validator: (val) => val == null || val.length < 6 ? context.tr('Mật khẩu phải tối thiểu 6 ký tự', 'Password must be at least 6 characters') : null,
+                  decoration: InputDecoration(
+                    labelText: context.tr('Mật khẩu', 'Password'),
+                    labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.white38),
+                    border: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
+                    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
                   ),
                 ),
               ],
@@ -177,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                   ),
-                  child: Text(_isLoginView ? 'ĐĂNG NHẬP HỆ THỐNG' : 'ĐĂNG KÝ TÀI KHOẢN'),
+                  child: Text(_isLoginView ? context.tr('ĐĂNG NHẬP HỆ THỐNG', 'LOG IN') : context.tr('ĐĂNG KÝ TÀI KHOẢN', 'REGISTER')),
                 ),
           const SizedBox(height: 16),
 
@@ -190,7 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               });
             },
             child: Text(
-              _isLoginView ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Quay lại đăng nhập',
+              _isLoginView ? context.tr('Chưa có tài khoản? Đăng ký ngay', 'No account? Register now') : context.tr('Đã có tài khoản? Quay lại đăng nhập', 'Have account? Back to login'),
               style: const TextStyle(color: Color(0xFF06B6D4), fontSize: 12, fontWeight: FontWeight.w700),
             ),
           ),
@@ -205,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_isLoginView) {
       provider.login(_usernameController.text.trim(), _passwordController.text).then((res) {
         if (res['success'] != true) {
-          _showErrorSnackbar(res['message'] ?? 'Đăng nhập thất bại');
+          _showErrorSnackbar(res['message'] ?? context.tr('Đăng nhập thất bại', 'Login failed'));
         }
       });
     } else {
@@ -222,10 +247,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _passwordController.clear();
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đăng ký thành công! Vui lòng đăng nhập.')),
+            SnackBar(content: Text(context.tr('Đăng ký thành công! Vui lòng đăng nhập.', 'Registration successful! Please log in.'))),
           );
         } else {
-          _showErrorSnackbar(res['message'] ?? 'Đăng ký thất bại');
+          _showErrorSnackbar(res['message'] ?? context.tr('Đăng ký thất bại', 'Registration failed'));
         }
       });
     }
@@ -286,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   border: Border.all(color: const Color(0xFF06B6D4), width: 1.0),
                 ),
                 child: Text(
-                  'CẤP ĐỘ ${user['level'] ?? 1}',
+                  '${context.tr('CẤP ĐỘ', 'LEVEL')} ${user['level'] ?? 1}',
                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF06B6D4)),
                 ),
               ),
@@ -307,19 +332,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text('STREAKS', style: TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
-                        Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
+                      children: [
+                        Text(context.tr('CHUỖI NGÀY', 'STREAKS'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                        const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '${user['current_streak'] ?? 0} Ngày',
+                      '${user['current_streak'] ?? 0} ${context.tr('Ngày', 'Days')}',
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Kỷ lục: ${user['longest_streak'] ?? 0} ngày',
+                      '${context.tr('Kỷ lục:', 'Record:')} ${user['longest_streak'] ?? 0} ${context.tr('ngày', 'days')}',
                       style: const TextStyle(fontSize: 10, color: Colors.white38),
                     ),
                   ],
@@ -336,9 +361,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text('TỔNG ĐIỂM', style: TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
-                        Icon(Icons.stars, color: Colors.yellow, size: 20),
+                      children: [
+                        Text(context.tr('TỔNG ĐIỂM', 'TOTAL POINTS'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                        const Icon(Icons.stars, color: Colors.yellow, size: 20),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -347,9 +372,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Cố gắng học thêm 50XP',
-                      style: TextStyle(fontSize: 10, color: Colors.white38),
+                    Text(
+                      context.tr('Cố gắng học thêm 50XP', 'Try to learn 50XP more'),
+                      style: const TextStyle(fontSize: 10, color: Colors.white38),
                     ),
                   ],
                 ),
@@ -360,9 +385,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 20),
 
         // SETTINGS & LOGOUT LIST
-        const Text(
-          'THIẾT LẬP HỆ THỐNG',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white38, letterSpacing: 1.0),
+        Text(
+          context.tr('THIẾT LẬP HỆ THỐNG', 'SYSTEM SETTINGS'),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white38, letterSpacing: 1.0),
         ),
         const SizedBox(height: 8),
         
@@ -373,7 +398,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Bookmarks item
               ListTile(
                 leading: const Icon(Icons.collections_bookmark_outlined, color: Colors.white70),
-                title: const Text('Bộ sưu tập đã lưu', style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
+                title: Text(context.tr('Bộ sưu tập đã lưu', 'Saved Bookmarks'), style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
                 trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 12),
                 onTap: () {
                   Navigator.of(context).push(
@@ -385,7 +410,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Notification item
               ListTile(
                 leading: const Icon(Icons.notifications_outlined, color: Colors.white70),
-                title: const Text('Thông báo hàng ngày', style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
+                title: Text(context.tr('Thông báo hàng ngày', 'Daily Notifications'), style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
                 trailing: Switch(
                   value: true,
                   activeColor: const Color(0xFF06B6D4),
@@ -396,19 +421,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Theme item
               ListTile(
                 leading: const Icon(Icons.dark_mode_outlined, color: Colors.white70),
-                title: const Text('Giao diện tối (Dark Mode)', style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
+                title: Text(context.tr('Giao diện tối (Dark Mode)', 'Dark Theme'), style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
                 trailing: const Icon(Icons.check, color: Color(0xFF06B6D4), size: 20),
               ),
               const Divider(color: Colors.white12, height: 1),
               // App Store Privacy Policy item
               ListTile(
                 leading: const Icon(Icons.privacy_tip_outlined, color: Colors.white70),
-                title: const Text('Chính sách bảo mật', style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
+                title: Text(context.tr('Chính sách bảo mật', 'Privacy Policy'), style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
                 trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 12),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Đang mở: https://codego.app/api/privacy_policy.html')),
-                  );
+                onTap: () async {
+                  final Uri url = Uri.parse('https://codego.io.vn/privacy_policy.html');
+                  try {
+                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(context.tr('Không thể mở liên kết chính sách bảo mật.', 'Could not open privacy policy link.'))),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${context.tr('Lỗi:', 'Error:')} $e')),
+                    );
+                  }
                 },
               ),
             ],
@@ -428,15 +462,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
-          child: const Text('ĐĂNG XUẤT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          child: Text(context.tr('ĐĂNG XUẤT', 'LOG OUT'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
         ),
         const SizedBox(height: 12),
         // Delete Account button (Mandatory App Store Publishing requirement!)
         TextButton(
           onPressed: () => _showDeleteConfirmation(context, provider),
-          child: const Text(
-            'XÓA TÀI KHOẢN VĨNH VIỄN',
-            style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+          child: Text(
+            context.tr('XÓA TÀI KHOẢN VĨNH VIỄN', 'DELETE ACCOUNT PERMANENTLY'),
+            style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5),
           ),
         ),
       ],
@@ -450,26 +484,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return AlertDialog(
           backgroundColor: const Color(0xFF161F30),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Xóa Tài Khoản?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-          content: const Text(
-            'LƯU Ý: Hành động này không thể hoàn tác. Toàn bộ dữ liệu XP, Streaks và bộ sưu tập đã lưu của bạn sẽ bị xóa vĩnh viễn trên cơ sở dữ liệu để tuân thủ quyền riêng tư App Store.',
-            style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+          title: Text(context.tr('Xóa Tài Khoản?', 'Delete Account?'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+          content: Text(
+            context.tr(
+              'LƯU Ý: Hành động này không thể hoàn tác. Toàn bộ dữ liệu XP, Streaks và bộ sưu tập đã lưu của bạn sẽ bị xóa vĩnh viễn trên cơ sở dữ liệu để tuân thủ quyền riêng tư App Store.',
+              'WARNING: This action cannot be undone. All your XP, Streaks, and saved bookmarks will be permanently deleted from the database to comply with App Store privacy guidelines.',
+            ),
+            style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('HỦY', style: TextStyle(color: Colors.white54, fontWeight: FontWeight.bold)),
+              child: Text(context.tr('HỦY', 'CANCEL'), style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold)),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                provider.logout().then((_) {
+                provider.deleteAccount().then((res) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Tài khoản của bạn đã được xóa vĩnh viễn.')),
+                    SnackBar(
+                      content: Text(res['message'] ?? context.tr('Tài khoản của bạn đã được xóa vĩnh viễn.', 'Your account has been permanently deleted.')),
+                      backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
+                    ),
                   );
                 });
               },
-              child: const Text('XÓA NGAY', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              child: Text(context.tr('XÓA NGAY', 'DELETE NOW'), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
             ),
           ],
         );

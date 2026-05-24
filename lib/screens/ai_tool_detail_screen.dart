@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/ai_tool.dart';
+import '../providers/app_provider.dart';
 import '../widgets/glassmorphic_card.dart';
 
 class AiToolDetailScreen extends StatelessWidget {
@@ -20,7 +23,7 @@ class AiToolDetailScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Đã sao chép liên kết của ${tool.name} vào bộ nhớ tạm!',
+                  context.tr('Đã sao chép liên kết của ${tool.name} vào bộ nhớ tạm!', 'Copied website link of ${tool.name} to clipboard!'),
                   style: const TextStyle(fontSize: 12, color: Colors.white),
                 ),
               ),
@@ -33,6 +36,22 @@ class AiToolDetailScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  void _launchWebsiteUrl(BuildContext context, String? url) async {
+    if (url == null || url.isEmpty) return;
+    final Uri uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${context.tr('Không thể mở liên kết:', 'Could not open link:')} $url')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${context.tr('Lỗi:', 'Error:')} $e')),
+      );
+    }
   }
 
   @override
@@ -142,9 +161,9 @@ class AiToolDetailScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3), width: 0.5),
                               ),
-                              child: const Text(
-                                'ƯU TIÊN FREE/TRIAL',
-                                style: TextStyle(
+                              child: Text(
+                                context.tr('ƯU TIÊN FREE/TRIAL', 'PRIORITIZED FREE/TRIAL'),
+                                style: const TextStyle(
                                   fontSize: 8,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF10B981),
@@ -170,9 +189,9 @@ class AiToolDetailScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               // SPECIFICATIONS SECTION
-              const Text(
-                'THÔNG SỐ KỸ THUẬT & CHI PHÍ',
-                style: TextStyle(
+              Text(
+                context.tr('THÔNG SỐ KỸ THUẬT & CHI PHÍ', 'SPECIFICATIONS & COST'),
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF06B6D4),
@@ -188,28 +207,28 @@ class AiToolDetailScreen extends StatelessWidget {
                       _buildSpecRow(
                         Icons.sell_outlined,
                         Colors.amberAccent,
-                        'Hình thức thanh toán',
+                        context.tr('Hình thức thanh toán', 'Pricing model'),
                         tool.pricingType,
                       ),
                       const Divider(color: Colors.white10, height: 20),
                       _buildSpecRow(
                         Icons.price_change_outlined,
                         Colors.lightGreenAccent,
-                        'Chi tiết chi phí',
+                        context.tr('Chi tiết chi phí', 'Cost details'),
                         tool.pricingDetail,
                       ),
                       const Divider(color: Colors.white10, height: 20),
                       _buildSpecRow(
                         Icons.speed_outlined,
                         const Color(0xFF06B6D4),
-                        'Tốc độ xử lý',
+                        context.tr('Tốc độ xử lý', 'Speed rating'),
                         tool.speedRating,
                       ),
                       const Divider(color: Colors.white10, height: 20),
                       _buildSpecRow(
                         Icons.layers_outlined,
                         const Color(0xFF8B5CF6),
-                        'Context Window',
+                        context.tr('Khung ngữ cảnh (Context)', 'Context Window'),
                         tool.contextWindow,
                       ),
                     ],
@@ -219,9 +238,9 @@ class AiToolDetailScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // EXPERT EVALUATION
-              const Text(
-                'ĐÁNH GIÁ CHUYÊN SÂU',
-                style: TextStyle(
+              Text(
+                context.tr('ĐÁNH GIÁ CHUYÊN SÂU', 'EXPERT EVALUATION'),
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF06B6D4),
@@ -245,9 +264,9 @@ class AiToolDetailScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // HOW TO USE GUIDE (MARKDOWN)
-              const Text(
-                'HƯỚNG DẪN SỬ DỤNG CHI TIẾT',
-                style: TextStyle(
+              Text(
+                context.tr('HƯỚNG DẪN SỬ DỤNG CHI TIẾT', 'DETAILED USAGE GUIDE'),
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF06B6D4),
@@ -259,9 +278,9 @@ class AiToolDetailScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: tool.howToUse.isEmpty
-                      ? const Text(
-                          'Đang cập nhật hướng dẫn sử dụng...',
-                          style: TextStyle(color: Colors.white38, fontSize: 13, fontStyle: FontStyle.italic),
+                      ? Text(
+                          context.tr('Đang cập nhật hướng dẫn sử dụng...', 'Usage guide is being updated...'),
+                          style: const TextStyle(color: Colors.white38, fontSize: 13, fontStyle: FontStyle.italic),
                         )
                       : MarkdownBody(
                           data: tool.howToUse,
@@ -313,45 +332,64 @@ class AiToolDetailScreen extends StatelessWidget {
                             ),
                           ),
                           onTapLink: (text, href, title) {
-                            _copyWebsiteUrl(context, href);
+                            _launchWebsiteUrl(context, href);
                           },
                         ),
                 ),
               ),
               const SizedBox(height: 24),
 
-              // ACTION BUTTON (COPY LINK / WEBSITE)
+              // ACTION BUTTONS (VISIT WEBSITE & COPY LINK)
               if (tool.websiteUrl != null && tool.websiteUrl!.isNotEmpty) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF161F30),
-                      foregroundColor: Colors.white,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.white.withOpacity(0.08)),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    onPressed: () => _copyWebsiteUrl(context, tool.websiteUrl),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF06B6D4)),
-                        const SizedBox(width: 8),
-                        Text(
-                          'SAO CHÉP LINK TRANG CHỦ ${tool.name.toUpperCase()}',
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF06B6D4),
+                          foregroundColor: Colors.black,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: () => _launchWebsiteUrl(context, tool.websiteUrl),
+                        icon: const Icon(Icons.language, size: 16),
+                        label: Text(
+                          context.tr('TRUY CẬP WEBSITE', 'VISIT WEBSITE'),
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          side: BorderSide(color: Colors.white.withOpacity(0.12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: () => _copyWebsiteUrl(context, tool.websiteUrl),
+                        icon: const Icon(Icons.copy_rounded, size: 16),
+                        label: Text(
+                          context.tr('SAO CHÉP LINK', 'COPY LINK'),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
               ],

@@ -7,6 +7,7 @@ import '../models/dev_workflow.dart';
 import '../widgets/glassmorphic_card.dart';
 import '../widgets/shimmer_loader.dart';
 import './workflow_detail_screen.dart';
+import 'settings_screen.dart';
 
 class PromptHubScreen extends StatefulWidget {
   const PromptHubScreen({super.key});
@@ -44,24 +45,36 @@ class _PromptHubScreenState extends State<PromptHubScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'WORKSPACE HUB',
-                    style: TextStyle(
+                  Text(
+                    context.tr('TRUNG TÂM PHÁT TRIỂN', 'WORKSPACE HUB'),
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
                       letterSpacing: 0.8,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.refresh_rounded, color: Colors.white70, size: 22),
-                    onPressed: () {
-                      if (_activeTab == 0) {
-                        provider.loadPrompts();
-                      } else {
-                        provider.loadWorkflows();
-                      }
-                    },
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded, color: Colors.white70, size: 22),
+                        onPressed: () {
+                          if (_activeTab == 0) {
+                            provider.loadPrompts();
+                          } else {
+                            provider.loadWorkflows();
+                          }
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 22),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                          );
+                        },
+                      ),
+                    ],
                   )
                 ],
               ),
@@ -95,7 +108,7 @@ class _PromptHubScreenState extends State<PromptHubScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            'AI PROMPTS',
+                            context.tr('THƯ VIỆN PROMPTS', 'AI PROMPTS'),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -121,7 +134,7 @@ class _PromptHubScreenState extends State<PromptHubScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            'DEV WORKFLOWS',
+                            context.tr('QUY TRÌNH DEV', 'DEV WORKFLOWS'),
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -158,8 +171,8 @@ class _PromptHubScreenState extends State<PromptHubScreen> {
                   },
                   decoration: InputDecoration(
                     hintText: _activeTab == 0
-                        ? 'Tìm kiếm prompt (ví dụ: refactor, unit test...)'
-                        : 'Tìm kiếm quy trình (ví dụ: docker, actions...)',
+                        ? context.tr('Tìm kiếm prompt (ví dụ: refactor, unit test...)', 'Search prompts (e.g. refactor, unit test...)')
+                        : context.tr('Tìm kiếm quy trình (ví dụ: docker, actions...)', 'Search workflows (e.g. docker, actions...)'),
                     hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
                     prefixIcon: const Icon(Icons.search, color: Colors.white54, size: 20),
                     suffixIcon: _searchController.text.isNotEmpty
@@ -198,7 +211,14 @@ class _PromptHubScreenState extends State<PromptHubScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: ChoiceChip(
                       label: Text(
-                        cat.toUpperCase(),
+                        (() {
+                          if (cat == 'All') return context.tr('Tất cả', 'All');
+                          if (cat == 'Refactoring') return context.tr('Tối ưu Code', 'Refactoring');
+                          if (cat == 'Debugging') return context.tr('Sửa lỗi', 'Debugging');
+                          if (cat == 'Testing') return context.tr('Kiểm thử', 'Testing');
+                          if (cat == 'Code Generation') return context.tr('Sinh Code', 'Code Gen');
+                          return cat;
+                        })().toUpperCase(),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
@@ -249,10 +269,10 @@ class _PromptHubScreenState extends State<PromptHubScreen> {
             child: ShimmerLoader.listSkeleton(count: 3),
           )
         : provider.curatedPrompts.isEmpty
-            ? const Center(
+            ? Center(
                 child: Text(
-                  'Không tìm thấy prompt phù hợp.',
-                  style: TextStyle(color: Colors.white60),
+                  context.tr('Không tìm thấy prompt phù hợp.', 'No matching prompts found.'),
+                  style: const TextStyle(color: Colors.white60),
                 ),
               )
             : ListView.builder(
@@ -272,10 +292,10 @@ class _PromptHubScreenState extends State<PromptHubScreen> {
             child: ShimmerLoader.listSkeleton(count: 3),
           )
         : provider.devWorkflows.isEmpty
-            ? const Center(
+            ? Center(
                 child: Text(
-                  'Không tìm thấy quy trình phù hợp.',
-                  style: TextStyle(color: Colors.white60),
+                  context.tr('Không tìm thấy quy trình phù hợp.', 'No matching workflows found.'),
+                  style: const TextStyle(color: Colors.white60),
                 ),
               )
             : ListView.builder(
@@ -434,7 +454,7 @@ class _PromptHubScreenState extends State<PromptHubScreen> {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: Text(
-                    isExpanded ? 'THU GỌN' : 'CHI TIẾT',
+                    isExpanded ? context.tr('THU GỌN', 'COLLAPSE') : context.tr('CHI TIẾT', 'DETAILS'),
                     style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                   ),
                 ),
@@ -590,7 +610,7 @@ class _PromptHubScreenState extends State<PromptHubScreen> {
                     minimumSize: const Size(80, 32),
                     textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                   ),
-                  child: const Text('CHI TIẾT'),
+                  child: Text(context.tr('CHI TIẾT', 'DETAILS')),
                 ),
               ],
             ),

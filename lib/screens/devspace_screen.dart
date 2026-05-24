@@ -4,6 +4,7 @@ import '../widgets/glassmorphic_card.dart';
 import '../providers/app_provider.dart';
 import '../models/ai_tool.dart';
 import 'ai_tool_detail_screen.dart';
+import 'settings_screen.dart';
 
 class DevSpaceScreen extends StatefulWidget {
   const DevSpaceScreen({super.key});
@@ -22,31 +23,41 @@ class _DevSpaceScreenState extends State<DevSpaceScreen> {
         appBar: AppBar(
           backgroundColor: const Color(0xFF0B0F19),
           elevation: 0,
-          title: const Text(
-            'DEVSPACE',
-            style: TextStyle(
+          title: Text(
+            context.tr('DEVSPACE', 'DEVSPACE'),
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               letterSpacing: 1.2,
             ),
           ),
-          bottom: const TabBar(
-            indicatorColor: Color(0xFF06B6D4),
-            labelColor: Color(0xFF06B6D4),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings_outlined, color: Colors.white70),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                );
+              },
+            ),
+          ],
+          bottom: TabBar(
+            indicatorColor: const Color(0xFF06B6D4),
+            labelColor: const Color(0xFF06B6D4),
             unselectedLabelColor: Colors.white60,
-            labelStyle: TextStyle(
+            labelStyle: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.8,
             ),
             tabs: [
-              Tab(text: 'CÔNG CỤ AI'),
-              Tab(text: 'SỰ KIỆN TECH'),
+              Tab(text: context.tr('CÔNG CỤ AI', 'AI TOOLS')),
+              Tab(text: context.tr('SỰ KIỆN TECH', 'TECH EVENTS')),
             ],
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
             AiToolsTab(),
             TechEventsTab(),
@@ -98,15 +109,15 @@ class _AiToolsTabState extends State<AiToolsTab> {
           child: Container(
             height: MediaQuery.of(context).size.height * 0.6,
             alignment: Alignment.center,
-            child: const Column(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.widgets_outlined, size: 48, color: Colors.white30),
-                SizedBox(height: 12),
+                const Icon(Icons.widgets_outlined, size: 48, color: Colors.white30),
+                const SizedBox(height: 12),
                 Text(
-                  'Không thể lấy danh sách công cụ AI.\nVuốt xuống để thử lại.',
+                  context.tr('Không thể lấy danh sách công cụ AI.\nVuốt xuống để thử lại.', 'Could not load AI tools list.\nSwipe down to retry.'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white38, fontSize: 13, height: 1.4),
+                  style: const TextStyle(color: Colors.white38, fontSize: 13, height: 1.4),
                 ),
               ],
             ),
@@ -218,9 +229,9 @@ class AiToolCard extends StatelessWidget {
                       color: const Color(0xFF10B981).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text(
-                      'ƯU TIÊN FREE/TRIAL',
-                      style: TextStyle(fontSize: 7, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
+                    child: Text(
+                      context.tr('ƯU TIÊN FREE/TRIAL', 'FREE/TRIAL PRIORITIZED'),
+                      style: const TextStyle(fontSize: 7, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
                     ),
                   ),
                 ],
@@ -250,7 +261,7 @@ class AiToolCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.sell_outlined, color: Colors.amberAccent, size: 14),
                       const SizedBox(width: 8),
-                      const Text('Chi phí:', style: TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                      Text(context.tr('Chi phí:', 'Cost:'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -273,7 +284,7 @@ class AiToolCard extends StatelessWidget {
                           children: [
                             const Icon(Icons.speed_outlined, color: Color(0xFF06B6D4), size: 14),
                             const SizedBox(width: 6),
-                            const Text('Tốc độ:', style: TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                            Text(context.tr('Tốc độ:', 'Speed:'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -293,7 +304,7 @@ class AiToolCard extends StatelessWidget {
                           children: [
                             const Icon(Icons.layers_outlined, color: Color(0xFF8B5CF6), size: 14),
                             const SizedBox(width: 6),
-                            const Text('Context:', style: TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                            Text(context.tr('Ngữ cảnh:', 'Context:'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(

@@ -39,12 +39,12 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Color(0xFF10B981), size: 20),
-              SizedBox(width: 10),
+            children: [
+              const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 20),
+              const SizedBox(width: 10),
               Text(
-                'Đã copy code cấu hình thành công!',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                context.tr('Đã copy code cấu hình thành công!', 'Configuration code copied successfully!'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
               ),
             ],
           ),
@@ -59,7 +59,7 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
   }
 
   void _shareWorkflow() {
-    final text = 'Quy trình: ${widget.workflow.title}\n\nMô tả: ${widget.workflow.description}\n\nXem chi tiết tại CodeGo TechFlow.';
+    final text = '${context.tr('Quy trình', 'Workflow')}: ${widget.workflow.title}\n\nMô tả: ${widget.workflow.description}\n\n${context.tr('Xem chi tiết tại CodeGo TechFlow.', 'View details on CodeGo TechFlow.')}';
     Share.share(text);
   }
 
@@ -87,10 +87,10 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
                     icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'DEV WORKFLOW',
-                      style: TextStyle(
+                      context.tr('QUY TRÌNH PHÁT TRIỂN', 'DEV WORKFLOW'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -158,7 +158,7 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
                         const Icon(Icons.copy_all_rounded, size: 14, color: Colors.white54),
                         const SizedBox(width: 4),
                         Text(
-                          '${widget.workflow.copyCount} copies',
+                          '${widget.workflow.copyCount} ${context.tr('lượt copy', 'copies')}',
                           style: const TextStyle(fontSize: 12, color: Colors.white54),
                         ),
                       ],
@@ -255,7 +255,7 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () => _copyToClipboard(context),
                       icon: const Icon(Icons.copy_all_rounded, color: Colors.black, size: 18),
-                      label: const Text('COPY CONFIG / CODE'),
+                      label: Text(context.tr('SAO CHÉP CẤU HÌNH', 'COPY CONFIG / CODE')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF8B5CF6),
                         foregroundColor: Colors.black,

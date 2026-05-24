@@ -10,14 +10,14 @@ import '../models/ai_tool.dart';
 class ApiService {
   // Thay đổi URL này thành IP server/hosting của bạn.
   static String baseUrl = 'https://codego.io.vn/api';
-  
+
   final _storage = const FlutterSecureStorage();
-  
+
   static const String _keyAccessToken = 'access_token';
   static const String _keyUserToken = 'user_token';
   static const String _keyUserInfo = 'user_info';
   static const String _keyLanguage = 'app_language';
-  
+
   // Singleton pattern
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
@@ -26,22 +26,26 @@ class ApiService {
   // ============================================
   // QUẢN LÝ SECURE TOKENS & THÔNG TIN USER
   // ============================================
-  
+
   Future<void> _secureWrite(String key, String value) async {
     try {
       await _storage.write(
-        key: key, 
+        key: key,
         value: value,
-        iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+        iOptions: const IOSOptions(
+          accessibility: KeychainAccessibility.first_unlock,
+        ),
       );
     } catch (e) {
       // Bắt lỗi iOS keychain duplicate item bug (-25299)
       try {
         await _storage.delete(key: key);
         await _storage.write(
-          key: key, 
+          key: key,
           value: value,
-          iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+          iOptions: const IOSOptions(
+            accessibility: KeychainAccessibility.first_unlock,
+          ),
         );
       } catch (_) {}
     }
@@ -109,10 +113,7 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/get_token.php'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'api_key': apiKey,
-          'api_secret': apiSecret,
-        }),
+        body: jsonEncode({'api_key': apiKey, 'api_secret': apiSecret}),
       );
 
       final data = jsonDecode(response.body);
@@ -135,7 +136,7 @@ class ApiService {
       // Nếu chưa có, lấy mới tự động
       token = await fetchSystemAccessToken();
     }
-    
+
     final Map<String, String> headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
@@ -167,7 +168,7 @@ class ApiService {
         body: jsonEncode({
           'username': username,
           'password': password,
-          'platform': 'ios'
+          'platform': 'ios',
         }),
       );
 
@@ -175,13 +176,16 @@ class ApiService {
       if (response.statusCode == 200 && data['success'] == true) {
         final userToken = data['data']['user_token'] as String;
         final userInfo = data['data']['user'] as Map<String, dynamic>;
-        
+
         await saveUserToken(userToken);
         await saveUserInfo(userInfo);
-        
+
         return {'success': true, 'user': userInfo};
       } else {
-        return {'success': false, 'message': data['message'] ?? 'Đăng nhập thất bại'};
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Đăng nhập thất bại',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': 'Lỗi đăng nhập: $e'};
@@ -189,7 +193,12 @@ class ApiService {
   }
 
   /// Đăng ký User
-  Future<Map<String, dynamic>> register(String username, String email, String password, String name) async {
+  Future<Map<String, dynamic>> register(
+    String username,
+    String email,
+    String password,
+    String name,
+  ) async {
     try {
       final headers = await _getHeaders();
       final url = '$baseUrl/register.php';
@@ -198,29 +207,26 @@ class ApiService {
         'email': email,
         'password': password,
         'name': name,
-        'country': 'VN'
+        'country': 'VN',
       };
-      print('DEBUG API: Sending POST to $url');
-      print('DEBUG API: Headers: $headers');
-      print('DEBUG API: Request Body: $bodyMap');
-      
+
       final response = await http.post(
         Uri.parse(url),
         headers: headers,
         body: jsonEncode(bodyMap),
       );
- 
-      print('DEBUG API: Response Status Code: ${response.statusCode}');
-      print('DEBUG API: Response Body: ${response.body}');
 
       final data = jsonDecode(response.body);
-      if ((response.statusCode == 200 || response.statusCode == 201) && data['success'] == true) {
+      if ((response.statusCode == 200 || response.statusCode == 201) &&
+          data['success'] == true) {
         return {'success': true, 'message': data['message']};
       } else {
-        return {'success': false, 'message': data['message'] ?? 'Đăng ký thất bại'};
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Đăng ký thất bại',
+        };
       }
     } catch (e) {
-      print('DEBUG API: Catch error during registration: $e');
       return {'success': false, 'message': 'Lỗi đăng ký: $e'};
     }
   }
@@ -230,14 +236,21 @@ class ApiService {
   // ============================================
 
   /// Lấy danh sách tin tức công nghệ
-  Future<List<Article>> getTechNews({String category = '', String type = '', int page = 1, int limit = 10}) async {
+  Future<List<Article>> getTechNews({
+    String category = '',
+    String type = '',
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
       final headers = await _getHeaders();
-      final url = Uri.parse('$baseUrl/get_tech_news.php?category=$category&type=$type&page=$page&limit=$limit');
-      
+      final url = Uri.parse(
+        '$baseUrl/get_tech_news.php?category=$category&type=$type&page=$page&limit=$limit',
+      );
+
       final response = await http.get(url, headers: headers);
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         final List list = data['data']['articles'] as List;
         return list.map((json) => Article.fromJson(json)).toList();
@@ -251,14 +264,19 @@ class ApiService {
   }
 
   /// Lấy danh sách GitHub Trending Repos
-  Future<List<GitHubRepo>> getGitHubRepos({String period = 'daily', String language = ''}) async {
+  Future<List<GitHubRepo>> getGitHubRepos({
+    String period = 'daily',
+    String language = '',
+  }) async {
     try {
       final headers = await _getHeaders();
-      final url = Uri.parse('$baseUrl/get_github_repos.php?period=$period&language=$language');
-      
+      final url = Uri.parse(
+        '$baseUrl/get_github_repos.php?period=$period&language=$language',
+      );
+
       final response = await http.get(url, headers: headers);
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         final List list = data['data'] as List;
         return list.map((json) => GitHubRepo.fromJson(json)).toList();
@@ -272,14 +290,19 @@ class ApiService {
   }
 
   /// Lấy danh sách Curated Prompts
-  Future<List<CuratedPrompt>> getPrompts({String category = '', String search = ''}) async {
+  Future<List<CuratedPrompt>> getPrompts({
+    String category = '',
+    String search = '',
+  }) async {
     try {
       final headers = await _getHeaders();
-      final url = Uri.parse('$baseUrl/get_prompts.php?category=$category&search=$search');
-      
+      final url = Uri.parse(
+        '$baseUrl/get_prompts.php?category=$category&search=$search',
+      );
+
       final response = await http.get(url, headers: headers);
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         final List list = data['data'] as List;
         return list.map((json) => CuratedPrompt.fromJson(json)).toList();
@@ -293,14 +316,19 @@ class ApiService {
   }
 
   /// Lấy danh sách Dev Workflows
-  Future<List<DevWorkflow>> getDevWorkflows({String category = '', String search = ''}) async {
+  Future<List<DevWorkflow>> getDevWorkflows({
+    String category = '',
+    String search = '',
+  }) async {
     try {
       final headers = await _getHeaders();
-      final url = Uri.parse('$baseUrl/get_workflows.php?category=$category&search=$search');
-      
+      final url = Uri.parse(
+        '$baseUrl/get_workflows.php?category=$category&search=$search',
+      );
+
       final response = await http.get(url, headers: headers);
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         final List list = data['data'] as List;
         return list.map((json) => DevWorkflow.fromJson(json)).toList();
@@ -318,10 +346,10 @@ class ApiService {
     try {
       final headers = await _getHeaders();
       final url = Uri.parse('$baseUrl/get_ai_tools.php');
-      
+
       final response = await http.get(url, headers: headers);
       final data = jsonDecode(response.body);
-      
+
       if (response.statusCode == 200 && data['success'] == true) {
         final List list = data['data'] as List;
         return list.map((json) => AiTool.fromJson(json)).toList();
@@ -341,7 +369,8 @@ class ApiService {
   /// Thực hiện Like/Bookmark
   Future<bool> interact({
     required String action, // 'like', 'bookmark', 'copy'
-    required String itemType, // 'article', 'repo', 'ai_package', 'workflow', 'prompt'
+    required String
+    itemType, // 'article', 'repo', 'ai_package', 'workflow', 'prompt'
     required int itemId,
     required bool state, // true: like/bookmark, false: unlike/unbookmark
   }) async {
@@ -374,7 +403,10 @@ class ApiService {
   Future<Map<String, dynamic>> syncGitHubRepos() async {
     try {
       final headers = await _getHeaders();
-      final response = await http.get(Uri.parse('$baseUrl/cron_sync_github.php'), headers: headers);
+      final response = await http.get(
+        Uri.parse('$baseUrl/cron_sync_github.php'),
+        headers: headers,
+      );
       final data = jsonDecode(response.body);
       return data;
     } catch (e) {
@@ -386,7 +418,10 @@ class ApiService {
   Future<Map<String, dynamic>> syncTechNews() async {
     try {
       final headers = await _getHeaders();
-      final response = await http.get(Uri.parse('$baseUrl/cron_sync_news.php'), headers: headers);
+      final response = await http.get(
+        Uri.parse('$baseUrl/cron_sync_news.php'),
+        headers: headers,
+      );
       final data = jsonDecode(response.body);
       return data;
     } catch (e) {
@@ -426,10 +461,7 @@ class ApiService {
         };
       }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Lỗi kết nối API AI: $e',
-      };
+      return {'success': false, 'message': 'Lỗi kết nối API AI: $e'};
     }
   }
 
@@ -444,9 +476,15 @@ class ApiService {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        return {'success': true, 'message': data['message'] ?? 'Xóa tài khoản thành công'};
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Xóa tài khoản thành công',
+        };
       } else {
-        return {'success': false, 'message': data['message'] ?? 'Xóa tài khoản thất bại'};
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Xóa tài khoản thất bại',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': 'Lỗi kết nối máy chủ: $e'};

@@ -141,29 +141,87 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             GlassmorphicCard(
-              padding: EdgeInsets.zero,
-              child: Column(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
                 children: [
-                  ListTile(
-                    title: const Text(
-                      'Tiếng Việt',
-                      style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => provider.toggleLanguage(false),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: !provider.isEnglish
+                              ? const Color(0xFF06B6D4).withOpacity(0.12)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: !provider.isEnglish
+                                ? const Color(0xFF06B6D4)
+                                : Colors.white.withOpacity(0.05),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              '🇻🇳',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Tiếng Việt',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: !provider.isEnglish ? Colors.white : Colors.white54,
+                                fontWeight: !provider.isEnglish ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    trailing: !provider.isEnglish
-                        ? const Icon(Icons.check_circle, color: Color(0xFF06B6D4), size: 18)
-                        : null,
-                    onTap: () => provider.toggleLanguage(false),
                   ),
-                  const Divider(color: Colors.white12, height: 1),
-                  ListTile(
-                    title: const Text(
-                      'English',
-                      style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => provider.toggleLanguage(true),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: provider.isEnglish
+                              ? const Color(0xFF06B6D4).withOpacity(0.12)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: provider.isEnglish
+                                ? const Color(0xFF06B6D4)
+                                : Colors.white.withOpacity(0.05),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              '🇬🇧',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'English',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: provider.isEnglish ? Colors.white : Colors.white54,
+                                fontWeight: provider.isEnglish ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    trailing: provider.isEnglish
-                        ? const Icon(Icons.check_circle, color: Color(0xFF06B6D4), size: 18)
-                        : null,
-                    onTap: () => provider.toggleLanguage(true),
                   ),
                 ],
               ),

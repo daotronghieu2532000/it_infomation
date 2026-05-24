@@ -14,7 +14,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/helpers.php';
 
 // URL Registry JSON chứa danh sách công cụ AI và hướng dẫn sử dụng chi tiết (có thể host trên Github hoặc server trung tâm)
-$registry_url = 'https://raw.githubusercontent.com/tronghieu/codego-ai-registry/main/ai_tools.json';
+$registry_url = 'https://raw.githubusercontent.com/daotronghieu2532000/it_infomation/main/api/ai_tools_registry.json';
 
 // Fallback registry dữ liệu mẫu phòng trường hợp URL chính chưa được cấu hình hoặc lỗi kết nối
 $fallback_registry = [

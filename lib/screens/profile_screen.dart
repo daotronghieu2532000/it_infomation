@@ -247,7 +247,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _passwordController.clear();
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.tr('Đăng ký thành công! Vui lòng đăng nhập.', 'Registration successful! Please log in.'))),
+            SnackBar(
+              content: Text(
+                context.tr('Đăng ký thành công! Vui lòng đăng nhập.', 'Registration successful! Please log in.'),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: Colors.green,
+            ),
           );
         } else {
           _showErrorSnackbar(res['message'] ?? context.tr('Đăng ký thất bại', 'Registration failed'));

@@ -192,17 +192,26 @@ class ApiService {
   Future<Map<String, dynamic>> register(String username, String email, String password, String name) async {
     try {
       final headers = await _getHeaders();
+      final url = '$baseUrl/register.php';
+      final bodyMap = {
+        'username': username,
+        'email': email,
+        'password': password,
+        'name': name,
+        'country': 'VN'
+      };
+      print('DEBUG API: Sending POST to $url');
+      print('DEBUG API: Headers: $headers');
+      print('DEBUG API: Request Body: $bodyMap');
+      
       final response = await http.post(
-        Uri.parse('$baseUrl/register.php'),
+        Uri.parse(url),
         headers: headers,
-        body: jsonEncode({
-          'username': username,
-          'email': email,
-          'password': password,
-          'name': name,
-          'country': 'VN'
-        }),
+        body: jsonEncode(bodyMap),
       );
+ 
+      print('DEBUG API: Response Status Code: ${response.statusCode}');
+      print('DEBUG API: Response Body: ${response.body}');
 
       final data = jsonDecode(response.body);
       if ((response.statusCode == 200 || response.statusCode == 201) && data['success'] == true) {
@@ -211,6 +220,7 @@ class ApiService {
         return {'success': false, 'message': data['message'] ?? 'Đăng ký thất bại'};
       }
     } catch (e) {
+      print('DEBUG API: Catch error during registration: $e');
       return {'success': false, 'message': 'Lỗi đăng ký: $e'};
     }
   }

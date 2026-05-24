@@ -236,13 +236,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else {
       final username = _usernameController.text.trim();
       final password = _passwordController.text;
+      print('DEBUG: Starting registration process for user: $username');
       provider.register(
         username,
         _emailController.text.trim(),
         password,
         _nameController.text.trim(),
       ).then((res) {
+        print('DEBUG: Registration API response received: $res');
         if (res['success'] == true) {
+          print('DEBUG: Registration success! Displaying green SnackBar...');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -252,17 +255,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
               backgroundColor: Colors.green,
             ),
           );
+          print('DEBUG: Triggering auto-login for user: $username');
           // Auto login
           provider.login(username, password).then((loginRes) {
+            print('DEBUG: Auto-login response received: $loginRes');
             if (loginRes['success'] != true) {
+              print('DEBUG: Auto-login failed! Reverting to login view...');
               setState(() {
                 _isLoginView = true;
                 _passwordController.clear();
               });
               _showErrorSnackbar(loginRes['message'] ?? context.tr('Đăng nhập tự động thất bại', 'Automatic login failed'));
+            } else {
+              print('DEBUG: Auto-login succeeded!');
             }
           });
         } else {
+          print('DEBUG: Registration failed with error: ${res['message']}');
           _showErrorSnackbar(res['message'] ?? context.tr('Đăng ký thất bại', 'Registration failed'));
         }
       });

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/article.dart';
 import '../models/github_repo.dart';
 import '../models/prompt.dart';
@@ -9,6 +10,24 @@ import '../services/api_service.dart';
 
 class AppProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
+
+  // Ad-Free State
+  DateTime? _adsDisabledUntil;
+  bool get areAdsDisabled => _adsDisabledUntil != null && _adsDisabledUntil!.isAfter(DateTime.now());
+
+  Duration get remainingAdFreeTime {
+    if (_adsDisabledUntil == null) return Duration.zero;
+    final remaining = _adsDisabledUntil!.difference(DateTime.now());
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  Future<void> disableAdsFor(Duration duration) async {
+    final now = DateTime.now();
+    _adsDisabledUntil = now.add(duration);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('ads_disabled_until', _adsDisabledUntil!.toIso8601String());
+    notifyListeners();
+  }
 
   // Language State
   bool _isEnglish = false;
@@ -54,6 +73,9 @@ class AppProvider with ChangeNotifier {
   bool _isLoadingAuth = false;
   bool _isSyncingGitHub = false;
   bool _isSyncingNews = false;
+  bool _isSyncingAiTools = false;
+  List<dynamic> _leaderboard = [];
+  bool _isLoadingLeaderboard = false;
 
   bool get isLoadingNews => _isLoadingNews;
   bool get isLoadingRepos => _isLoadingRepos;
@@ -63,6 +85,9 @@ class AppProvider with ChangeNotifier {
   bool get isLoadingAuth => _isLoadingAuth;
   bool get isSyncingGitHub => _isSyncingGitHub;
   bool get isSyncingNews => _isSyncingNews;
+  bool get isSyncingAiTools => _isSyncingAiTools;
+  List<dynamic> get leaderboard => _leaderboard;
+  bool get isLoadingLeaderboard => _isLoadingLeaderboard;
 
   // Filters State
   String _selectedNewsCategory = 'All';
@@ -84,6 +109,17 @@ class AppProvider with ChangeNotifier {
     if (_isLoggedIn) {
       _userInfo = await _apiService.getUserInfo();
     }
+    
+    // Load ad-free status
+    final prefs = await SharedPreferences.getInstance();
+    final disabledUntilStr = prefs.getString('ads_disabled_until');
+    if (disabledUntilStr != null) {
+      final disabledUntil = DateTime.tryParse(disabledUntilStr);
+      if (disabledUntil != null && disabledUntil.isAfter(DateTime.now())) {
+        _adsDisabledUntil = disabledUntil;
+      }
+    }
+    
     notifyListeners();
     
     // Tải dữ liệu ban đầu
@@ -214,6 +250,40 @@ class AppProvider with ChangeNotifier {
     return res;
   }
 
+  /// Gửi kết quả Quiz và cộng điểm cho user
+  Future<Map<String, dynamic>> submitQuizPoints(int points, String quizId) async {
+    if (!_isLoggedIn || _userInfo == null) {
+      return {'success': false, 'message': 'Bạn cần đăng nhập để tích lũy điểm!'};
+    }
+    final userId = int.tryParse(_userInfo!['user_id']?.toString() ?? '') ?? 0;
+    if (userId <= 0) {
+      return {'success': false, 'message': 'Không tìm thấy thông tin tài khoản'};
+    }
+
+    try {
+      final res = await _apiService.saveUserProgress(
+        userId: userId,
+        contentType: 'exercise',
+        contentId: quizId,
+        language: 'general',
+        pointsEarned: points,
+      );
+
+      if (res['success'] == true) {
+        // Cập nhật điểm cục bộ tức thì trên UI
+        final updatedUser = Map<String, dynamic>.from(_userInfo!);
+        final currentPoints = int.tryParse(updatedUser['total_points']?.toString() ?? '0') ?? 0;
+        updatedUser['total_points'] = currentPoints + points;
+        
+        _userInfo = updatedUser;
+        notifyListeners();
+      }
+      return res;
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi gửi kết quả: $e'};
+    }
+  }
+
   // ============================================
   // XỬ LÝ TRUY VẤN DỮ LIỆU
   // ============================================
@@ -331,6 +401,22 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Nạp danh sách bảng xếp hạng (Leaderboard)
+  Future<void> loadLeaderboard() async {
+    _isLoadingLeaderboard = true;
+    notifyListeners();
+
+    try {
+      final res = await _apiService.getLeaderboard(type: 'global', limit: 50);
+      if (res['success'] == true) {
+        _leaderboard = res['data']['entries'] as List;
+      }
+    } catch (_) {}
+
+    _isLoadingLeaderboard = false;
+    notifyListeners();
+  }
+
   // ============================================
   // ĐỒNG BỘ DỮ LIỆU THỦ CÔNG (MANUAL SYNC TRIGGERS)
   // ============================================
@@ -361,6 +447,28 @@ class AppProvider with ChangeNotifier {
     _isSyncingNews = false;
     notifyListeners();
     return res;
+  }
+
+  Future<Map<String, dynamic>> triggerSyncAiTools() async {
+    _isSyncingAiTools = true;
+    notifyListeners();
+    
+    final res = await _apiService.syncAiTools();
+    if (res['success'] == true) {
+      await loadAiTools();
+    }
+    
+    _isSyncingAiTools = false;
+    notifyListeners();
+    return res;
+  }
+
+  /// Gọi API Trợ lý AI để giải thích hoặc tóm tắt dữ liệu
+  Future<Map<String, dynamic>> getAIExplanation(String prompt) async {
+    return await _apiService.callAIHelper(
+      code: prompt,
+      action: 'explain',
+    );
   }
 
   // ============================================

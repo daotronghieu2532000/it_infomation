@@ -40,7 +40,7 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 20),
+              const Icon(Icons.check_circle, color: Color(0xFF30D158), size: 20),
               const SizedBox(width: 10),
               Text(
                 context.tr('Đã copy code cấu hình thành công!', 'Configuration code copied successfully!'),
@@ -48,13 +48,14 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
               ),
             ],
           ),
-          backgroundColor: const Color(0xFF161F30),
+          backgroundColor: const Color(0xFF1C1C1E),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
           margin: const EdgeInsets.all(16),
         ),
       );
+
     });
   }
 
@@ -70,16 +71,16 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
     final isBookmarked = widget.workflow.isBookmarked;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F19),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
-            // Glassmorphic Custom AppBar
+            // Glassmorphic Custom AppBar — Apple Style flat
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF161F30).withOpacity(0.8),
-                border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05), width: 0.8)),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1C1C1E),
+                border: Border(bottom: BorderSide(color: Colors.white12, width: 0.5)),
               ),
               child: Row(
                 children: [
@@ -92,9 +93,9 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
                       context.tr('QUY TRÌNH PHÁT TRIỂN', 'DEV WORKFLOW'),
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
                         color: Colors.white,
-                        letterSpacing: 1.0,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
@@ -117,17 +118,16 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF8B5CF6).withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.4), width: 0.8),
+                        color: const Color(0xFFBF5AF2).withOpacity(0.15),
+                        border: Border.all(color: const Color(0xFFBF5AF2).withOpacity(0.4), width: 0.5),
                       ),
                       child: Text(
                         widget.workflow.toolCategory.toUpperCase(),
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFFC084FC),
-                          letterSpacing: 0.8,
+                          color: Color(0xFFBF5AF2),
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -188,19 +188,18 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
                         h2: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700, height: 1.6),
                         h3: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700, height: 1.4),
                         code: const TextStyle(
-                          color: Color(0xFFC084FC),
+                          color: Color(0xFFBF5AF2),
                           backgroundColor: Color(0xFF1E1E2E),
                           fontSize: 11,
                           fontFamily: 'monospace',
                         ),
                         codeblockDecoration: BoxDecoration(
-                          color: const Color(0xFF111827),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white.withOpacity(0.06), width: 0.8),
+                          color: const Color(0xFF1C1C1E),
+                          border: Border.all(color: Colors.white12, width: 0.5),
                         ),
                         blockquote: const TextStyle(color: Colors.white54, fontSize: 12, fontStyle: FontStyle.italic),
                         blockquoteDecoration: const BoxDecoration(
-                          border: Border(left: BorderSide(color: Color(0xFF8B5CF6), width: 4)),
+                          border: Border(left: BorderSide(color: Color(0xFFBF5AF2), width: 3)),
                         ),
                       ),
                     ),
@@ -215,9 +214,9 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
       bottomNavigationBar: provider.isLoggedIn
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF161F30),
-                border: Border(top: BorderSide(color: Colors.white.withOpacity(0.06), width: 0.8)),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1C1C1E),
+                border: Border(top: BorderSide(color: Colors.white12, width: 0.5)),
               ),
               child: Row(
                 children: [
@@ -240,7 +239,7 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
                   IconButton(
                     icon: Icon(
                       isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                      color: isBookmarked ? const Color(0xFF8B5CF6) : Colors.white70,
+                      color: isBookmarked ? const Color(0xFF0A84FF) : Colors.white70,
                     ),
                     onPressed: () {
                       provider.toggleBookmark(itemType: 'workflow', itemId: widget.workflow.id);
@@ -254,12 +253,13 @@ class _WorkflowDetailScreenState extends State<WorkflowDetailScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () => _copyToClipboard(context),
-                      icon: const Icon(Icons.copy_all_rounded, color: Colors.black, size: 18),
+                      icon: const Icon(Icons.copy_all_rounded, color: Colors.white, size: 18),
                       label: Text(context.tr('SAO CHÉP CẤU HÌNH', 'COPY CONFIG / CODE')),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B5CF6),
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: const Color(0xFF0A84FF),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                       ),

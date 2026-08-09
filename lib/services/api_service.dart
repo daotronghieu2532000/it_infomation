@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -88,7 +89,17 @@ class ApiService {
 
   Future<bool> getLanguagePreference() async {
     final lang = await _storage.read(key: _keyLanguage);
-    return lang == 'en';
+    if (lang != null) {
+      return lang == 'en';
+    }
+    // Default to system language if not set yet
+    try {
+      final systemLocale = PlatformDispatcher.instance.locale;
+      final isVi = systemLocale.languageCode.toLowerCase() == 'vi';
+      return !isVi; // If Vietnamese, not English (isEnglish = false). Otherwise default to English (isEnglish = true)
+    } catch (e) {
+      return false; // Fallback to Vietnamese
+    }
   }
 
   Future<void> setLanguagePreference(bool isEn) async {
@@ -395,6 +406,37 @@ class ApiService {
     }
   }
 
+  /// Lưu tiến trình học tập / làm quiz và cộng điểm cho user
+  Future<Map<String, dynamic>> saveUserProgress({
+    required int userId,
+    required String contentType, // 'lesson' hoặc 'exercise'
+    required String contentId, // ví dụ: 'quiz_daily_2026_08_09'
+    required String language, // ví dụ: 'general' hoặc 'dart'
+    required int pointsEarned,
+  }) async {
+    try {
+      final headers = await _getHeaders(requireUser: true);
+      final response = await http.post(
+        Uri.parse('$baseUrl/codego_progress.php'),
+        headers: headers,
+        body: jsonEncode({
+          'action': 'complete',
+          'user_id': userId,
+          'content_type': contentType,
+          'content_id': contentId,
+          'language': language,
+          'is_completed': 1,
+          'points_earned': pointsEarned,
+        }),
+      );
+      final data = jsonDecode(response.body);
+      return data;
+    } catch (e) {
+      print('Error saveUserProgress: $e');
+      return {'success': false, 'message': 'Lỗi kết nối lưu tiến trình: $e'};
+    }
+  }
+
   // ============================================
   // ĐỒNG BỘ DỮ LIỆU CHỦ ĐỘNG (TRIGGER SYNC)
   // ============================================
@@ -426,6 +468,21 @@ class ApiService {
       return data;
     } catch (e) {
       return {'success': false, 'message': 'Lỗi kết nối đồng bộ tin tức: $e'};
+    }
+  }
+
+  /// Kích hoạt đồng bộ danh sách Công cụ AI từ registry trung tâm
+  Future<Map<String, dynamic>> syncAiTools() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/cron_sync_ai_tools.php'),
+        headers: headers,
+      );
+      final data = jsonDecode(response.body);
+      return data;
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối đồng bộ Công cụ AI: $e'};
     }
   }
 
@@ -547,6 +604,29 @@ class ApiService {
       }
     } catch (e) {
       return {'success': false, 'message': 'Lỗi upload avatar: $e'};
+    }
+  }
+
+  /// Lấy danh sách Bảng xếp hạng (Leaderboard)
+  Future<Map<String, dynamic>> getLeaderboard({
+    String type = 'global',
+    int limit = 50,
+  }) async {
+    try {
+      final headers = await _getHeaders(requireUser: true);
+      final response = await http.post(
+        Uri.parse('$baseUrl/leaderboard.php'),
+        headers: headers,
+        body: jsonEncode({
+          'type': type,
+          'limit': limit,
+        }),
+      );
+      final data = jsonDecode(response.body);
+      return data;
+    } catch (e) {
+      print('Error getLeaderboard: $e');
+      return {'success': false, 'message': 'Lỗi kết nối bảng xếp hạng: $e'};
     }
   }
 }

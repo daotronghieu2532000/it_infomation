@@ -19,9 +19,9 @@ class _DevSpaceScreenState extends State<DevSpaceScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0B0F19),
+        backgroundColor: Colors.black,
         appBar: AppBar(
-          backgroundColor: const Color(0xFF0B0F19),
+          backgroundColor: Colors.black,
           elevation: 0,
           title: Text(
             context.tr('DEVSPACE', 'DEVSPACE'),
@@ -34,18 +34,48 @@ class _DevSpaceScreenState extends State<DevSpaceScreen> {
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.settings_outlined, color: Colors.white70),
+              icon: const Icon(Icons.settings_outlined, color: Colors.white70, size: 22),
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const SettingsScreen()),
                 );
               },
             ),
+            const SizedBox(width: 4),
+            Consumer<AppProvider>(
+              builder: (context, provider, child) {
+                return provider.isSyncingAiTools
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12.0),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0A84FF)),
+                        ),
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.sync_rounded, color: Color(0xFF0A84FF), size: 22),
+                        onPressed: () {
+                          provider.triggerSyncAiTools().then((res) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(res['message'] ?? context.tr('Đồng bộ Công cụ AI hoàn tất!', 'AI tools sync completed!')),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          });
+                        },
+                      );
+              },
+            ),
+            const SizedBox(width: 8),
           ],
           bottom: TabBar(
-            indicatorColor: const Color(0xFF06B6D4),
-            labelColor: const Color(0xFF06B6D4),
-            unselectedLabelColor: Colors.white60,
+            indicatorColor: const Color(0xFF0A84FF),
+            indicatorWeight: 2.0,
+            labelColor: const Color(0xFF0A84FF),
+            unselectedLabelColor: Colors.white54,
+            dividerColor: Colors.white12,
             labelStyle: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w900,
@@ -97,7 +127,7 @@ class _AiToolsTabState extends State<AiToolsTab> {
     final provider = Provider.of<AppProvider>(context);
 
     if (provider.isLoadingAiTools && provider.aiTools.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF06B6D4)));
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF0A84FF)));
     }
 
     if (provider.aiTools.isEmpty) {
@@ -128,16 +158,13 @@ class _AiToolsTabState extends State<AiToolsTab> {
 
     return RefreshIndicator(
       onRefresh: _refreshData,
-      color: const Color(0xFF06B6D4),
+      color: const Color(0xFF0A84FF),
       child: ListView.builder(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.zero,
         itemCount: provider.aiTools.length,
         itemBuilder: (context, index) {
           final tool = provider.aiTools[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: AiToolCard(tool: tool),
-          );
+          return AiToolCard(tool: tool);
         },
       ),
     );
@@ -154,180 +181,188 @@ class AiToolCard extends StatelessWidget {
     final t = tool;
 
     // Định nghĩa màu sắc theo danh mục
-    Color categoryColor = const Color(0xFF06B6D4);
+    Color categoryColor = const Color(0xFF0A84FF);
     if (t.category == 'IDE') {
-      categoryColor = const Color(0xFF8B5CF6); // Tím cho IDE
+      categoryColor = const Color(0xFFBF5AF2); // Apple Purple cho IDE
     } else if (t.category == 'Local Runner') {
-      categoryColor = const Color(0xFFF59E0B); // Cam cho Local Tool
+      categoryColor = const Color(0xFFFF9F0A); // Apple Orange cho Local Tool
     } else if (t.category == 'LLM Model') {
-      categoryColor = const Color(0xFF10B981); // Xanh lá cho Mô hình
+      categoryColor = const Color(0xFF30D158); // Apple Green cho Mô hình
     }
 
-    return GlassmorphicCard(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => AiToolDetailScreen(tool: t),
-          ),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Dòng đầu: Badge chuyên mục, Rating, nút sang trang chi tiết
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Badge category
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: categoryColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: categoryColor.withOpacity(0.4), width: 0.8),
-                  ),
-                  child: Text(
-                    t.category.toUpperCase(),
-                    style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: categoryColor),
-                  ),
-                ),
-                // Rating Score & Arrow
-                Row(
-                  children: [
-                    const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${t.efficiencyScore}/10',
-                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.white12, width: 0.5),
+        ),
+      ),
+      child: GlassmorphicCard(
+        borderRadius: 0,
+        borderWidth: 0,
+        backgroundColor: Colors.transparent,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => AiToolDetailScreen(tool: t),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Dòng đầu: Badge chuyên mục, Rating, nút sang trang chi tiết
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Badge category
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: categoryColor.withOpacity(0.15),
+                      border: Border.all(color: categoryColor.withOpacity(0.4), width: 0.5),
                     ),
+                    child: Text(
+                      t.category.toUpperCase(),
+                      style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: categoryColor),
+                    ),
+                  ),
+                  // Rating Score & Arrow
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${t.efficiencyScore}/10',
+                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.white38,
+                        size: 11,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Dòng 2: Tên công cụ AI & Tag ưu tiên Free
+              Row(
+                children: [
+                  Text(
+                    t.name,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
+                  ),
+                  if (t.isFreePrioritized) ...[
                     const SizedBox(width: 8),
-                    const Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      color: Colors.white38,
-                      size: 11,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF30D158).withOpacity(0.12),
+                      ),
+                      child: Text(
+                        context.tr('ƯU TIÊN FREE/TRIAL', 'FREE/TRIAL PRIORITIZED'),
+                        style: const TextStyle(fontSize: 7, fontWeight: FontWeight.w900, color: Color(0xFF30D158)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Dòng 3: Mô tả ngắn gọn
+              Text(
+                t.description,
+                style: const TextStyle(fontSize: 11, color: Colors.white60, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+
+              // Khối Thông số kỹ thuật & Chi phí dạng Grid
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.03),
+                  border: Border.all(color: Colors.white12, width: 0.5),
+                ),
+                child: Column(
+                  children: [
+                    // Hàng 1: Chi phí
+                    Row(
+                      children: [
+                        const Icon(Icons.sell_outlined, color: Colors.amberAccent, size: 14),
+                        const SizedBox(width: 8),
+                        Text(context.tr('Chi phí:', 'Cost:'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            t.pricingDetail,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Colors.white12, height: 10),
+                    // Hàng 2: Tốc độ & Ngữ cảnh
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Cột 1: Tốc độ
+                        Expanded(
+                          child: Row(
+                            children: [
+                              const Icon(Icons.speed_outlined, color: Color(0xFF0A84FF), size: 14),
+                              const SizedBox(width: 6),
+                              Text(context.tr('Tốc độ:', 'Speed:'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  t.speedRating,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Cột 2: Ngữ cảnh
+                        Expanded(
+                          child: Row(
+                            children: [
+                              const Icon(Icons.layers_outlined, color: Color(0xFFBF5AF2), size: 14),
+                              const SizedBox(width: 6),
+                              Text(context.tr('Ngữ cảnh:', 'Context:'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  t.contextWindow,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // Dòng 2: Tên công cụ AI & Tag ưu tiên Free
-            Row(
-              children: [
-                Text(
-                  t.name,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
-                ),
-                if (t.isFreePrioritized) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      context.tr('ƯU TIÊN FREE/TRIAL', 'FREE/TRIAL PRIORITIZED'),
-                      style: const TextStyle(fontSize: 7, fontWeight: FontWeight.w900, color: Color(0xFF10B981)),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Dòng 3: Mô tả ngắn gọn
-            Text(
-              t.description,
-              style: const TextStyle(fontSize: 11, color: Colors.white60, height: 1.4),
-            ),
-            const SizedBox(height: 12),
-
-            // Khối Thông số kỹ thuật & Chi phí dạng Grid
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.02),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white.withOpacity(0.04)),
               ),
-              child: Column(
-                children: [
-                  // Hàng 1: Chi phí
-                  Row(
-                    children: [
-                      const Icon(Icons.sell_outlined, color: Colors.amberAccent, size: 14),
-                      const SizedBox(width: 8),
-                      Text(context.tr('Chi phí:', 'Cost:'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          t.pricingDetail,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(color: Colors.white12, height: 10),
-                  // Hàng 2: Tốc độ & Ngữ cảnh
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Cột 1: Tốc độ
-                      Expanded(
-                        child: Row(
-                          children: [
-                            const Icon(Icons.speed_outlined, color: Color(0xFF06B6D4), size: 14),
-                            const SizedBox(width: 6),
-                            Text(context.tr('Tốc độ:', 'Speed:'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                t.speedRating,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Cột 2: Ngữ cảnh
-                      Expanded(
-                        child: Row(
-                          children: [
-                            const Icon(Icons.layers_outlined, color: Color(0xFF8B5CF6), size: 14),
-                            const SizedBox(width: 6),
-                            Text(context.tr('Ngữ cảnh:', 'Context:'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                t.contextWindow,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
 
 // =========================================================================
 // 2. TECH EVENTS TAB (CONFERENCES TIMELINE)
@@ -376,92 +411,59 @@ class TechEventsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.zero,
       itemCount: _events.length,
       itemBuilder: (context, index) {
         final ev = _events[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left timeline indicator
-              Column(
-                children: [
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF0B0F19),
-                      border: Border.all(color: const Color(0xFF06B6D4), width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF06B6D4).withOpacity(0.4),
-                          blurRadius: 6,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (index < _events.length - 1)
+        return Container(
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: Colors.white12, width: 0.5),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
                     Container(
-                      width: 2,
-                      height: 140,
-                      color: Colors.white12,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0A84FF).withOpacity(0.12),
+                      ),
+                      child: Text(
+                        ev['tag']!,
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF0A84FF)),
+                      ),
                     ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              // Right event card content
-              Expanded(
-                child: GlassmorphicCard(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF06B6D4).withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              ev['tag']!,
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF06B6D4)),
-                            ),
-                          ),
-                          const Icon(Icons.event_note, color: Colors.white30, size: 16),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        ev['title']!,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '📅 ${ev['date']}',
-                        style: const TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '📍 ${ev['location']}',
-                        style: const TextStyle(fontSize: 10, color: Colors.white38),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        ev['desc']!,
-                        style: const TextStyle(fontSize: 11, color: Colors.white60, height: 1.4),
-                      ),
-                    ],
-                  ),
+                    const Icon(Icons.event_note, color: Colors.white30, size: 16),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  ev['title']!,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '📅 ${ev['date']}',
+                  style: const TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '📍 ${ev['location']}',
+                  style: const TextStyle(fontSize: 10, color: Colors.white38),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  ev['desc']!,
+                  style: const TextStyle(fontSize: 11, color: Colors.white60, height: 1.4),
+                ),
+              ],
+            ),
           ),
         );
       },

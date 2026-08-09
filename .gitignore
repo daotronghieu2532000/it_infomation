@@ -49,3 +49,6 @@ api/includes/config.php
 api/vendor/
 api/uploads/
 .flutter-plugins
+
+# iOS build cache
+ios/build/

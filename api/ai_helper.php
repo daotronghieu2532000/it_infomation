@@ -122,7 +122,56 @@ if (!$success_call) {
 
     // Tạo nội dung phân tích dựa trên action
     if ($action === 'explain') {
-        $ai_response = "### 🧠 Phân tích & Giải thích Mã nguồn (Chế độ Demo)\n\n> **Lưu ý:** Đây là kết quả phân tích mô phỏng vì chưa cấu hình Gemini API Key trên máy chủ. Bạn có thể cấu hình `GEMINI_API_KEY` trong `ai_helper.php` để nhận câu trả lời thực tế từ AI.\n\n* **Ngôn ngữ nhận diện:** `$detected_language`\n* **Đánh giá tổng quan:** Đoạn mã nguồn có cấu trúc rõ ràng, thực hiện nhiệm vụ xử lý logic hoặc render UI cơ bản.\n\n#### 🔍 Chi tiết luồng xử lý:\n1. **Khởi tạo và cấu hình:** Thiết lập các thư viện, imports hoặc các biến đầu vào cần thiết cho module xử lý.\n2. **Hàm xử lý chính:** Thực hiện thuật toán cốt lõi. Sử dụng các cấu trúc điều kiện hoặc lặp để lọc, duyệt phần tử hoặc quản lý luồng dữ liệu.\n3. **Kết quả trả về:** Trả về đối tượng/UI Widget/Dữ liệu sau khi xử lý hoặc in ra thiết bị ngoại vi để theo dõi.\n\n#### 💡 Đóng góp gợi ý nâng cấp:\n* Nên bổ sung xử lý lỗi (`try-catch`) bao bọc các thao tác bất đồng bộ hoặc kết nối dữ liệu để tránh crash ứng dụng.\n* Cân nhắc tách nhỏ các hàm xử lý dài thành các hàm helper đơn nhiệm để dễ bảo trì và viết Unit Test.";
+        // Kiểm tra xem đây là tác vụ tóm tắt bài viết hay giải thích code thông thường
+        $is_article_summary = (mb_strpos($code, 'tóm tắt') !== false || mb_strpos(strtolower($code), 'summarize') !== false);
+
+        if ($is_article_summary) {
+            // Trích xuất phần nội dung bài viết nằm sau prompt (phần văn bản chính)
+            $parts = explode("\n\n", $code);
+            $article_content = count($parts) > 1 ? end($parts) : $code;
+
+            // Nhận diện ngôn ngữ sơ bộ dựa trên sự xuất hiện của các ký tự tiếng Việt đặc trưng
+            $is_vietnamese = preg_match('/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i', $article_content);
+
+            // Thuật toán trích xuất câu (extractive summarization) đơn giản:
+            // Tách các câu dựa trên dấu chấm, dấu chấm hỏi, dấu chấm than
+            $sentences = preg_split('/(?<=[.!?])\s+/', $article_content);
+            $clean_sentences = [];
+            foreach ($sentences as $s) {
+                $s = trim($s);
+                // Loại bỏ code block, markdown header, hoặc các câu quá ngắn/quá dài rác
+                if (empty($s) || strpos($s, '`') !== false || strpos($s, '#') !== false || strlen($s) < 15) {
+                    continue;
+                }
+                $clean_sentences[] = $s;
+            }
+
+            // Lấy tối đa 3 câu đầu tiên làm tóm tắt
+            $summary_points = array_slice($clean_sentences, 0, 3);
+
+            if (empty($summary_points)) {
+                if ($is_vietnamese) {
+                    $ai_response = "### 🧠 Tóm tắt bài viết (Chế độ Offline)\n\n* Không thể tự động phân tách câu từ bài viết này. Vui lòng cấu hình `GEMINI_API_KEY` để nhận tóm tắt AI chi tiết.";
+                } else {
+                    $ai_response = "### 🧠 Article Summary (Offline Mode)\n\n* Could not automatically extract key sentences. Please configure `GEMINI_API_KEY` to get detailed AI summarization.";
+                }
+            } else {
+                if ($is_vietnamese) {
+                    $ai_response = "### 🧠 Tóm tắt bài viết (Chế độ Offline)\n\n*Đây là tóm tắt tự động được trích xuất từ nội dung gốc (Chưa cấu hình API Key trên máy chủ):*\n\n";
+                    foreach ($summary_points as $point) {
+                        $ai_response .= "* " . $point . "\n";
+                    }
+                } else {
+                    $ai_response = "### 🧠 Article Summary (Offline Mode)\n\n*Here is the automatic summary extracted from the source content (API Key not configured on server):*\n\n";
+                    foreach ($summary_points as $point) {
+                        $ai_response .= "* " . $point . "\n";
+                    }
+                }
+            }
+        } else {
+            // Giải thích mã nguồn thông thường (mặc định)
+            $ai_response = "### 🧠 Phân tích & Giải thích Mã nguồn (Chế độ Demo)\n\n> **Lưu ý:** Đây là kết quả phân tích mô phỏng vì chưa cấu hình Gemini API Key trên máy chủ. Bạn có thể cấu hình `GEMINI_API_KEY` trong `ai_helper.php` để nhận câu trả lời thực tế từ AI.\n\n* **Ngôn ngữ nhận diện:** `$detected_language`\n* **Đánh giá tổng quan:** Đoạn mã nguồn có cấu trúc rõ ràng, thực hiện nhiệm vụ xử lý logic hoặc render UI cơ bản.\n\n#### 🔍 Chi tiết luồng xử lý:\n1. **Khởi tạo và cấu hình:** Thiết lập các thư viện, imports hoặc các biến đầu vào cần thiết cho module xử lý.\n2. **Hàm xử lý chính:** Thực hiện thuật toán cốt lõi. Sử dụng các cấu trúc điều kiện hoặc lặp để lọc, duyệt phần tử hoặc quản lý luồng dữ liệu.\n3. **Kết quả trả về:** Trả về đối tượng/UI Widget/Dữ liệu sau khi xử lý hoặc in ra thiết bị ngoại vi để theo dõi.\n\n#### 💡 Đóng góp gợi ý nâng cấp:\n* Nên bổ sung xử lý lỗi (`try-catch`) bao bọc các thao tác bất đồng bộ hoặc kết nối dữ liệu để tránh crash ứng dụng.\n* Cân nhắc tách nhỏ các hàm xử lý dài thành các hàm helper đơn nhiệm để dễ bảo trì và viết Unit Test.";
+        }
     } elseif ($action === 'debug') {
         $clean_code = preg_replace('/(\/\*([\s\S]*?)\*\/)|(\/\/(.*)$)/m', '', $code); // loại bỏ comment để clean
         $ai_response = "### 🛠️ Rà soát lỗi & Tối ưu hóa Code (Chế độ Demo)\n\n> **Lưu ý:** Đây là kết quả phân tích mô phỏng vì chưa cấu hình Gemini API Key trên máy chủ.\n\n#### 🔴 Các vấn đề tiềm ẩn được phát hiện:\n1. **Thiếu Khối Xử Lý Lỗi (Exception Handling):** Đoạn mã chưa bao bọc các tác vụ nhạy cảm (như ép kiểu, truy xuất phần tử mảng, kết nối mạng) trong khối `try-catch` hoặc kiểm tra điều kiện `null`. Điều này dễ dẫn đến lỗi crash Runtime.\n2. **Tối ưu hóa hiệu năng (Performance):** Sử dụng các phép toán lặp hoặc khởi tạo lại đối tượng liên tục trong vòng lặp có thể gây quá tải bộ nhớ và áp lực lên bộ dọn rác (Garbage Collector).\n\n#### 🟢 Phương án khắc phục & Đoạn code tối ưu:\n* Dưới đây là đề xuất viết lại code sạch hơn, an toàn hơn:\n\n```dart\n// Code đã được cải tiến và thêm cơ chế xử lý lỗi an toàn\ntry {\n  // Kiểm tra điều kiện đầu vào trước khi xử lý\n  if (input != null) {\n    // Đoạn code xử lý an toàn\n    print(\"Xử lý thành công dữ liệu\");\n  } else {\n    print(\"Dữ liệu đầu vào không hợp lệ\");\n  }\n} catch (e) {\n  // Ghi log lỗi thay vì làm sập luồng chính\n  print(\"Lỗi phát sinh: \$e\");\n}\n```\n\n#### 📈 Đánh giá sau tối ưu:\n* **Tính an toàn:** Tăng 40% (Giảm thiểu crash ứng dụng).\n* **Bộ nhớ:** Tiết kiệm hơn nhờ tái sử dụng biến và quản lý luồng bất đồng bộ tốt hơn.";

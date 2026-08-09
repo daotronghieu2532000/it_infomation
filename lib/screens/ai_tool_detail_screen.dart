@@ -19,7 +19,7 @@ class AiToolDetailScreen extends StatelessWidget {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_outline, color: Color(0xFF06B6D4), size: 18),
+              const Icon(Icons.check_circle_outline, color: Color(0xFF30D158), size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -29,12 +29,13 @@ class AiToolDetailScreen extends StatelessWidget {
               ),
             ],
           ),
-          backgroundColor: const Color(0xFF161F30),
+          backgroundColor: const Color(0xFF1C1C1E),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
           duration: const Duration(seconds: 2),
         ),
       );
+
     });
   }
 
@@ -56,20 +57,20 @@ class AiToolDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine category colors
-    Color categoryColor = const Color(0xFF06B6D4);
+    // Determine category colors — Apple Palette
+    Color categoryColor = const Color(0xFF0A84FF);
     if (tool.category == 'IDE') {
-      categoryColor = const Color(0xFF8B5CF6); // Violet for IDE
+      categoryColor = const Color(0xFFBF5AF2); // Purple for IDE
     } else if (tool.category == 'Local Runner') {
-      categoryColor = const Color(0xFFF59E0B); // Amber for Local Tool
+      categoryColor = const Color(0xFFFF9F0A); // Orange for Local Tool
     } else if (tool.category == 'LLM Model') {
-      categoryColor = const Color(0xFF10B981); // Emerald for Model
+      categoryColor = const Color(0xFF30D158); // Green for Model
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F19),
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0F19),
+        backgroundColor: Colors.black,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
@@ -81,7 +82,7 @@ class AiToolDetailScreen extends StatelessWidget {
             fontSize: 18,
             fontWeight: FontWeight.w900,
             color: Colors.white,
-            letterSpacing: 0.8,
+            letterSpacing: 0.5,
           ),
         ),
         centerTitle: true,
@@ -93,8 +94,11 @@ class AiToolDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER CARD WITH KEY INFO
+              // HEADER CARD WITH KEY INFO — Apple style
               GlassmorphicCard(
+                borderRadius: 0,
+                borderWidth: 0,
+                backgroundColor: const Color(0xFF1C1C1E),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -108,8 +112,7 @@ class AiToolDetailScreen extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: categoryColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: categoryColor.withOpacity(0.4), width: 0.8),
+                              border: Border.all(color: categoryColor.withOpacity(0.4), width: 0.5),
                             ),
                             child: Text(
                               tool.category.toUpperCase(),
@@ -157,16 +160,15 @@ class AiToolDetailScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3), width: 0.5),
+                                color: const Color(0xFF30D158).withOpacity(0.15),
+                                border: Border.all(color: const Color(0xFF30D158).withOpacity(0.3), width: 0.5),
                               ),
                               child: Text(
                                 context.tr('ƯU TIÊN FREE/TRIAL', 'PRIORITIZED FREE/TRIAL'),
                                 style: const TextStyle(
                                   fontSize: 8,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF10B981),
+                                  color: Color(0xFF30D158),
                                 ),
                               ),
                             ),
@@ -188,18 +190,21 @@ class AiToolDetailScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // SPECIFICATIONS SECTION
+              // SPECIFICATIONS SECTION — phẳng full-width
               Text(
                 context.tr('THÔNG SỐ KỸ THUẬT & CHI PHÍ', 'SPECIFICATIONS & COST'),
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF06B6D4),
-                  letterSpacing: 1.0,
+                  color: Color(0xFF0A84FF),
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 10),
               GlassmorphicCard(
+                borderRadius: 0,
+                borderWidth: 0,
+                backgroundColor: const Color(0xFF1C1C1E),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -220,14 +225,14 @@ class AiToolDetailScreen extends StatelessWidget {
                       const Divider(color: Colors.white10, height: 20),
                       _buildSpecRow(
                         Icons.speed_outlined,
-                        const Color(0xFF06B6D4),
+                        const Color(0xFF0A84FF),
                         context.tr('Tốc độ xử lý', 'Speed rating'),
                         tool.speedRating,
                       ),
                       const Divider(color: Colors.white10, height: 20),
                       _buildSpecRow(
                         Icons.layers_outlined,
-                        const Color(0xFF8B5CF6),
+                        const Color(0xFFBF5AF2),
                         context.tr('Khung ngữ cảnh (Context)', 'Context Window'),
                         tool.contextWindow,
                       ),
@@ -243,12 +248,15 @@ class AiToolDetailScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF06B6D4),
-                  letterSpacing: 1.0,
+                  color: Color(0xFF0A84FF),
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 10),
               GlassmorphicCard(
+                borderRadius: 0,
+                borderWidth: 0,
+                backgroundColor: const Color(0xFF1C1C1E),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
@@ -269,12 +277,15 @@ class AiToolDetailScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF06B6D4),
-                  letterSpacing: 1.0,
+                  color: Color(0xFF0A84FF),
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 10),
               GlassmorphicCard(
+                borderRadius: 0,
+                borderWidth: 0,
+                backgroundColor: const Color(0xFF1C1C1E),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: tool.howToUse.isEmpty
@@ -306,27 +317,26 @@ class AiToolDetailScreen extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               height: 1.6,
                             ),
-                            listBullet: const TextStyle(color: Color(0xFF06B6D4), fontSize: 14),
+                            listBullet: const TextStyle(color: Color(0xFF0A84FF), fontSize: 14),
                             code: TextStyle(
-                              color: const Color(0xFF06B6D4),
+                              color: const Color(0xFF0A84FF),
                               backgroundColor: Colors.white.withOpacity(0.06),
                               fontSize: 12,
                               fontFamily: 'monospace',
                             ),
                             codeblockDecoration: BoxDecoration(
                               color: Colors.black.withOpacity(0.35),
-                              borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: Colors.white.withOpacity(0.05)),
                             ),
                             codeblockPadding: const EdgeInsets.all(12),
                             blockquote: TextStyle(color: Colors.white.withOpacity(0.55), fontStyle: FontStyle.italic),
                             blockquoteDecoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.02),
-                              border: const Border(left: BorderSide(color: Color(0xFF06B6D4), width: 3)),
+                              border: const Border(left: BorderSide(color: Color(0xFF0A84FF), width: 3)),
                             ),
                             blockquotePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             a: const TextStyle(
-                              color: Color(0xFF06B6D4),
+                              color: Color(0xFF0A84FF),
                               decoration: TextDecoration.underline,
                               fontWeight: FontWeight.w600,
                             ),
@@ -346,11 +356,12 @@ class AiToolDetailScreen extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF06B6D4),
-                          foregroundColor: Colors.black,
+                          backgroundColor: const Color(0xFF0A84FF),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
                           shadowColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
@@ -371,9 +382,9 @@ class AiToolDetailScreen extends StatelessWidget {
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white70,
-                          side: BorderSide(color: Colors.white.withOpacity(0.12)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.white24, width: 0.5),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),

@@ -9,16 +9,18 @@ class GlassmorphicCard extends StatelessWidget {
   final Color? borderColor;
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
+  final DecorationImage? backgroundImage;
 
   const GlassmorphicCard({
     super.key,
     required this.child,
-    this.borderRadius = 16.0,
+    this.borderRadius = 0.0,
     this.borderWidth = 0.8,
     this.backgroundColor,
     this.borderColor,
     this.padding,
     this.onTap,
+    this.backgroundImage,
   });
 
   @override
@@ -35,6 +37,7 @@ class GlassmorphicCard extends StatelessWidget {
           color: borderColor ?? defaultBorder,
           width: borderWidth,
         ),
+        image: backgroundImage,
       ),
       child: child,
     );

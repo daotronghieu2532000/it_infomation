@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,6 +17,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoginView = true; // Toggle between Login and Register views
+  bool _obscurePassword = true;
   
   // Controllers
   final _usernameController = TextEditingController();
@@ -47,6 +49,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isUploadingAvatar = false;
       });
 
+      if (!mounted) return;
+
       if (res['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -74,72 +78,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final emailController = TextEditingController(text: user['email'] ?? '');
     final formKey = GlobalKey<FormState>();
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF161F30),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
           title: Text(
             context.tr('Chỉnh Sửa Hồ Sơ', 'Edit Profile'),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  validator: (val) => val == null || val.trim().isEmpty ? context.tr('Nhập tên hiển thị', 'Enter display name') : null,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Họ & Tên', 'Display Name'),
-                    labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-                    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 12.0),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CupertinoTextFormFieldRow(
+                    controller: nameController,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    placeholder: context.tr('Họ & Tên', 'Display Name'),
+                    placeholderStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                    padding: EdgeInsets.zero,
+                    validator: (val) => val == null || val.trim().isEmpty ? context.tr('Nhập tên hiển thị', 'Enter display name') : null,
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: emailController,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  validator: (val) => val == null || !val.contains('@') ? context.tr('Email không hợp lệ', 'Invalid email') : null,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Địa chỉ email', 'Email Address'),
-                    labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-                    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
+                  const SizedBox(height: 8),
+                  CupertinoTextFormFieldRow(
+                    controller: emailController,
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    placeholder: context.tr('Địa chỉ email', 'Email Address'),
+                    placeholderStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                    padding: EdgeInsets.zero,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (val) => val == null || !val.contains('@') ? context.tr('Email không hợp lệ', 'Invalid email') : null,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(context.tr('HỦY', 'CANCEL'), style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold)),
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(context.tr('Hủy', 'Cancel')),
             ),
-            TextButton(
+            CupertinoDialogAction(
               onPressed: () {
                 if (formKey.currentState?.validate() != true) return;
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 provider.updateProfile(
                   name: nameController.text.trim(),
                   email: emailController.text.trim(),
                 ).then((res) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        res['success'] == true 
-                            ? context.tr('Cập nhật hồ sơ thành công!', 'Profile updated successfully!')
-                            : (res['message'] ?? context.tr('Cập nhật hồ sơ thất bại', 'Profile update failed')),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          res['success'] == true 
+                              ? context.tr('Cập nhật hồ sơ thành công!', 'Profile updated successfully!')
+                              : (res['message'] ?? context.tr('Cập nhật hồ sơ thất bại', 'Profile update failed')),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
                       ),
-                      backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
-                    ),
-                  );
+                    );
+                  }
                 });
               },
-              child: Text(context.tr('LƯU', 'SAVE'), style: const TextStyle(color: Color(0xFF06B6D4), fontWeight: FontWeight.bold)),
+              child: Text(context.tr('Lưu', 'Save')),
             ),
           ],
         );
@@ -161,9 +166,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final provider = Provider.of<AppProvider>(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F19),
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0F19),
+        backgroundColor: Colors.black,
         elevation: 0,
         title: Text(
           context.tr('CÁ NHÂN', 'PROFILE'),
@@ -171,7 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontSize: 18,
             fontWeight: FontWeight.w900,
             color: Colors.white,
-            letterSpacing: 1.0,
+            letterSpacing: 0.5,
           ),
         ),
         actions: [
@@ -187,7 +192,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+          padding: provider.isLoggedIn
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
           child: provider.isLoggedIn 
               ? _buildProfileView(context, provider) 
               : _buildAuthView(context, provider),
@@ -206,127 +213,163 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: 30),
           // Logo & Slogan
           Center(
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF06B6D4).withOpacity(0.12),
+                    color: Colors.white.withOpacity(0.04),
                     shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF06B6D4), width: 1.5),
+                    border: Border.all(color: Colors.white12, width: 1),
                   ),
-                  child: const Icon(Icons.bolt, size: 40, color: Color(0xFF06B6D4)),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/icon/iconnn.png',
+                      width: 76,
+                      height: 76,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 const Text(
                   'CodeGo TechFlow',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   context.tr('Dẫn đầu trong vũ trụ công nghệ', 'Stay Ahead in the IT Universe'),
-                  style: const TextStyle(fontSize: 12, color: Colors.white38, fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 48),
+
+          // Title Auth Mode
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Text(
+              _isLoginView ? context.tr('ĐĂNG NHẬP', 'LOGIN') : context.tr('TẠO TÀI KHOẢN', 'CREATE ACCOUNT'),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white38, letterSpacing: 1.0),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Fields Card — Bo góc tròn kiểu iOS Grouped
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1C1C1E),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white12, width: 0.5),
+            ),
+            child: Column(
+              children: [
+                // Username field
+                TextFormField(
+                  controller: _usernameController,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  validator: (val) => val == null || val.trim().isEmpty ? context.tr('Tên đăng nhập không được trống', 'Username is required') : null,
+                  decoration: InputDecoration(
+                    hintText: context.tr('Tên đăng nhập', 'Username'),
+                    hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                    prefixIcon: const Icon(Icons.person_rounded, color: Colors.white38, size: 18),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  ),
+                ),
+                
+                // Register-only fields
+                if (!_isLoginView) ...[
+                  const Divider(color: Colors.white10, height: 0.5, indent: 48),
+                  // Name field
+                  TextFormField(
+                    controller: _nameController,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    validator: (val) => val == null || val.trim().isEmpty ? context.tr('Họ & Tên không được trống', 'Display name is required') : null,
+                    decoration: InputDecoration(
+                      hintText: context.tr('Họ & Tên', 'Display Name'),
+                      hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                      prefixIcon: const Icon(Icons.badge_rounded, color: Colors.white38, size: 18),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    ),
+                  ),
+                  const Divider(color: Colors.white10, height: 0.5, indent: 48),
+                  // Email field
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    validator: (val) => val == null || !val.contains('@') ? context.tr('Email không hợp lệ', 'Invalid email address') : null,
+                    decoration: InputDecoration(
+                      hintText: context.tr('Địa chỉ email', 'Email Address'),
+                      hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                      prefixIcon: const Icon(Icons.alternate_email_rounded, color: Colors.white38, size: 18),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    ),
+                  ),
+                ],
+                
+                const Divider(color: Colors.white10, height: 0.5, indent: 48),
+                // Password field
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  validator: (val) => val == null || val.length < 6 ? context.tr('Mật khẩu tối thiểu 6 ký tự', 'Password must be at least 6 characters') : null,
+                  decoration: InputDecoration(
+                    hintText: context.tr('Mật khẩu', 'Password'),
+                    hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+                    prefixIcon: const Icon(Icons.lock_rounded, color: Colors.white38, size: 18),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                        color: Colors.white38,
+                        size: 18,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 36),
 
-          // Title Auth Mode
-          Text(
-            _isLoginView ? context.tr('ĐĂNG NHẬP', 'LOGIN') : context.tr('TẠO TÀI KHOẢN', 'CREATE ACCOUNT'),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0),
-          ),
-          const SizedBox(height: 16),
-
-          // Fields Card
-          GlassmorphicCard(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                // Username field
-                TextFormField(
-                  controller: _usernameController,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  validator: (val) => val == null || val.trim().isEmpty ? context.tr('Nhập tên đăng nhập', 'Enter username') : null,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Tên đăng nhập', 'Username'),
-                    labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-                    prefixIcon: const Icon(Icons.person_outline, color: Colors.white38),
-                    border: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
-                    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Register-only fields
-                if (!_isLoginView) ...[
-                  // Name field
-                  TextFormField(
-                    controller: _nameController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    validator: (val) => val == null || val.trim().isEmpty ? context.tr('Nhập tên hiển thị', 'Enter display name') : null,
-                    decoration: InputDecoration(
-                      labelText: context.tr('Họ & Tên', 'Display Name'),
-                      labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-                      prefixIcon: const Icon(Icons.badge_outlined, color: Colors.white38),
-                      border: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
-                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
+          // Action Button - bo góc tròn tinh tế kiểu Apple
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: provider.isLoadingAuth
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFF0A84FF)))
+                : ElevatedButton(
+                    onPressed: () => _handleSubmitAuth(provider),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0A84FF),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                     ),
+                    child: Text((_isLoginView ? context.tr('Đăng Nhập', 'Log In') : context.tr('Tạo Tài Khoản', 'Create Account')).toUpperCase()),
                   ),
-                  const SizedBox(height: 12),
-                  // Email field
-                  TextFormField(
-                    controller: _emailController,
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
-                    validator: (val) => val == null || !val.contains('@') ? context.tr('Email không hợp lệ', 'Invalid email') : null,
-                    decoration: InputDecoration(
-                      labelText: context.tr('Địa chỉ email', 'Email Address'),
-                      labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-                      prefixIcon: const Icon(Icons.alternate_email, color: Colors.white38),
-                      border: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
-                      focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // Password field
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  validator: (val) => val == null || val.length < 6 ? context.tr('Mật khẩu phải tối thiểu 6 ký tự', 'Password must be at least 6 characters') : null,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Mật khẩu', 'Password'),
-                    labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-                    prefixIcon: const Icon(Icons.lock_outline, color: Colors.white38),
-                    border: const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white12)),
-                    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF06B6D4))),
-                  ),
-                ),
-              ],
-            ),
           ),
-          const SizedBox(height: 24),
-
-          // Action Button
-          provider.isLoadingAuth
-              ? const Center(child: CircularProgressIndicator(color: Color(0xFF06B6D4)))
-              : ElevatedButton(
-                  onPressed: () => _handleSubmitAuth(provider),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF06B6D4),
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.5),
-                  ),
-                  child: Text(_isLoginView ? context.tr('ĐĂNG NHẬP HỆ THỐNG', 'LOG IN') : context.tr('ĐĂNG KÝ TÀI KHOẢN', 'REGISTER')),
-                ),
           const SizedBox(height: 16),
 
           // Toggle Mode Link
@@ -339,7 +382,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
             child: Text(
               _isLoginView ? context.tr('Chưa có tài khoản? Đăng ký ngay', 'No account? Register now') : context.tr('Đã có tài khoản? Quay lại đăng nhập', 'Have account? Back to login'),
-              style: const TextStyle(color: Color(0xFF06B6D4), fontSize: 12, fontWeight: FontWeight.w700),
+              style: const TextStyle(color: Color(0xFF0A84FF), fontSize: 12, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -394,6 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showErrorSnackbar(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -412,105 +456,225 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 10),
-        // Avatar Header Card
-        GlassmorphicCard(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+        // Avatar Header Card — Tràn viền và dính sát đỉnh trang, không bo góc
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E),
+            borderRadius: BorderRadius.zero,
+            border: Border(
+              bottom: BorderSide(color: Colors.white.withOpacity(0.08), width: 0.5),
+            ),
+            image: const DecorationImage(
+              image: AssetImage('assets/banner_dark.png'),
+              fit: BoxFit.cover,
+              opacity: 0.15,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Avatar Section with Pick Image
-              GestureDetector(
-                onTap: () => _pickAndUploadAvatar(context, provider),
-                child: Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    CircleAvatar(
-                      radius: 36,
-                      backgroundColor: const Color(0xFF06B6D4).withOpacity(0.2),
-                      backgroundImage: (user['avatar'] != null && user['avatar'].toString().isNotEmpty)
-                          ? NetworkImage(user['avatar'].toString())
-                          : null,
-                      child: (user['avatar'] == null || user['avatar'].toString().isEmpty)
-                          ? Text(
-                              (user['name'] ?? 'U').substring(0, 1).toUpperCase(),
-                              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF06B6D4)),
-                            )
-                          : null,
-                    ),
-                    if (_isUploadingAvatar)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF06B6D4)),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Avatar Section with Pick Image
+                  GestureDetector(
+                    onTap: () => _pickAndUploadAvatar(context, provider),
+                    child: Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        CircleAvatar(
+                          radius: 36,
+                          backgroundColor: const Color(0xFF0A84FF).withOpacity(0.2),
+                          backgroundImage: (user['avatar'] != null && user['avatar'].toString().isNotEmpty)
+                              ? NetworkImage(user['avatar'].toString())
+                              : null,
+                          child: (user['avatar'] == null || user['avatar'].toString().isEmpty)
+                              ? Text(
+                                  (user['name'] ?? 'U').substring(0, 1).toUpperCase(),
+                                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF0A84FF)),
+                                )
+                              : null,
+                        ),
+                        if (_isUploadingAvatar)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0A84FF)),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF06B6D4),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.camera_alt, size: 12, color: Colors.black),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              // User Info details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            user['name'] ?? 'User Name',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF0A84FF),
+                            shape: BoxShape.circle,
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: Colors.white70, size: 16),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () => _showEditProfileDialog(context, provider),
+                          child: const Icon(Icons.camera_alt, size: 12, color: Colors.black),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      user['email'] ?? 'user@example.com',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: Colors.white38),
+                  ),
+                  const SizedBox(width: 16),
+                  // User Info details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                user['name'] ?? 'User Name',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, color: Colors.white70, size: 16),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => _showEditProfileDialog(context, provider),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user['email'] ?? 'user@example.com',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 11, color: Colors.white38),
+                        ),
+                        const SizedBox(height: 8),
+                        // Level badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0A84FF).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: const Color(0xFF0A84FF).withOpacity(0.3), width: 0.5),
+                          ),
+                          child: Text(
+                            '${context.tr('CẤP ĐỘ', 'LEVEL')} ${user['level'] ?? 1}',
+                            style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Color(0xFF0A84FF)),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    // Level badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF06B6D4).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF06B6D4).withOpacity(0.4), width: 0.8),
+                  ),
+                ],
+              ),
+              const Divider(color: Colors.white10, height: 24),
+              // Level progress bar (Apple Gamification)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${context.tr('Tiến độ tăng cấp', 'Level Progress')}',
+                        style: const TextStyle(fontSize: 11, color: Colors.white54, fontWeight: FontWeight.w600),
                       ),
-                      child: Text(
-                        '${context.tr('CẤP ĐỘ', 'LEVEL')} ${user['level'] ?? 1}',
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF06B6D4)),
+                      Text(
+                        '${(user['total_points'] ?? 0) % 1000}/1000 XP',
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF0A84FF), fontWeight: FontWeight.w900),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: ((user['total_points'] ?? 0) % 1000) / 1000.0,
+                      backgroundColor: Colors.white10,
+                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0A84FF)),
+                      minHeight: 4,
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // STREAKS & POINTS GRID CARDS — Tràn viền, không bo góc
+        Container(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: Colors.white.withOpacity(0.05), width: 0.5),
+              bottom: BorderSide(color: Colors.white.withOpacity(0.05), width: 0.5),
+            ),
+          ),
+          child: Row(
+            children: [
+              // Daily Streak card
+              Expanded(
+                child: Container(
+                  color: const Color(0xFF1C1C1E),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(context.tr('CHUỖI NGÀY', 'STREAKS'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                          Image.asset('assets/bonfire.png', width: 20, height: 20),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '${user['current_streak'] ?? 0} ${context.tr('Ngày', 'Days')}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${context.tr('Kỷ lục:', 'Record:')} ${user['longest_streak'] ?? 0} ${context.tr('ngày', 'days')}',
+                        style: const TextStyle(fontSize: 10, color: Colors.white38),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Container(width: 0.5, height: 80, color: Colors.white12), // Đường phân cách mỏng ở giữa
+              // Total points card
+              Expanded(
+                child: Container(
+                  color: const Color(0xFF1C1C1E),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(context.tr('TỔNG ĐIỂM', 'TOTAL POINTS'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
+                          const Icon(Icons.stars, color: Colors.yellow, size: 20),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '${user['total_points'] ?? 0} XP',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        context.tr('Cố gắng học thêm 50XP', 'Try to learn 50XP more'),
+                        style: const TextStyle(fontSize: 10, color: Colors.white38),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -518,116 +682,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 20),
 
-        // STREAKS & POINTS GRID CARDS
-        Row(
-          children: [
-            // Daily Streak card
-            Expanded(
-              child: GlassmorphicCard(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(context.tr('CHUỖI NGÀY', 'STREAKS'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
-                        const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${user['current_streak'] ?? 0} ${context.tr('Ngày', 'Days')}',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${context.tr('Kỷ lục:', 'Record:')} ${user['longest_streak'] ?? 0} ${context.tr('ngày', 'days')}',
-                      style: const TextStyle(fontSize: 10, color: Colors.white38),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Total points card
-            Expanded(
-              child: GlassmorphicCard(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(context.tr('TỔNG ĐIỂM', 'TOTAL POINTS'), style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
-                        const Icon(Icons.stars, color: Colors.yellow, size: 20),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${user['total_points'] ?? 0} XP',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      context.tr('Cố gắng học thêm 50XP', 'Try to learn 50XP more'),
-                      style: const TextStyle(fontSize: 10, color: Colors.white38),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-
         // SETTINGS & LOGOUT LIST
-        Text(
-          context.tr('THIẾT LẬP HỆ THỐNG', 'SYSTEM SETTINGS'),
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white38, letterSpacing: 1.0),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            context.tr('THIẾT LẬP HỆ THỐNG', 'SYSTEM SETTINGS'),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white38, letterSpacing: 0.5),
+          ),
         ),
         const SizedBox(height: 8),
         
-        GlassmorphicCard(
-          padding: EdgeInsets.zero,
+        // Grouped Settings List (iOS 17 Flat design - Tràn viền, không bo góc)
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C1C1E),
+            borderRadius: BorderRadius.zero,
+            border: Border(
+              top: BorderSide(color: Colors.white.withOpacity(0.05), width: 0.5),
+              bottom: BorderSide(color: Colors.white.withOpacity(0.05), width: 0.5),
+            ),
+          ),
           child: Column(
             children: [
               // Bookmarks item
               ListTile(
-                leading: const Icon(Icons.collections_bookmark_outlined, color: Colors.white70),
-                title: Text(context.tr('Bộ sưu tập đã lưu', 'Saved Bookmarks'), style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
-                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 12),
+                leading: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF007AFF), // Blue
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.collections_bookmark_rounded, color: Colors.white, size: 16),
+                ),
+                title: Text(context.tr('Bộ sưu tập đã lưu', 'Saved Bookmarks'), style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500)),
+                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 11),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => const BookmarksScreen()),
                   );
                 },
               ),
-              const Divider(color: Colors.white12, height: 1),
+              const Divider(color: Colors.white10, height: 0.5, indent: 56),
+              // Leaderboard item
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF9F0A), // Orange
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Image.asset('assets/award.png', width: 16, height: 16),
+                ),
+                title: Text(context.tr('Bảng xếp hạng TechFlow', 'TechFlow Leaderboard'), style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500)),
+                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 11),
+                onTap: () => _showLeaderboardBottomSheet(context, provider),
+              ),
+              const Divider(color: Colors.white10, height: 0.5, indent: 56),
               // Notification item
               ListTile(
-                leading: const Icon(Icons.notifications_outlined, color: Colors.white70),
-                title: Text(context.tr('Thông báo hàng ngày', 'Daily Notifications'), style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
+                leading: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF453A), // Red
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 16),
+                ),
+                title: Text(context.tr('Thông báo hàng ngày', 'Daily Notifications'), style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500)),
                 trailing: Switch(
                   value: true,
-                  activeColor: const Color(0xFF06B6D4),
+                  activeColor: const Color(0xFF30D158), // Green toggle
                   onChanged: (_) {},
                 ),
               ),
-              const Divider(color: Colors.white12, height: 1),
+              const Divider(color: Colors.white10, height: 0.5, indent: 56),
               // Theme item
               ListTile(
-                leading: const Icon(Icons.dark_mode_outlined, color: Colors.white70),
-                title: Text(context.tr('Giao diện tối (Dark Mode)', 'Dark Theme'), style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
-                trailing: const Icon(Icons.check, color: Color(0xFF06B6D4), size: 20),
+                leading: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8E8E93), // Grey
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.dark_mode_rounded, color: Colors.white, size: 16),
+                ),
+                title: Text(context.tr('Giao diện tối (Dark Mode)', 'Dark Theme'), style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500)),
+                trailing: const Icon(Icons.check, color: Color(0xFF30D158), size: 18),
               ),
-              const Divider(color: Colors.white12, height: 1),
+              const Divider(color: Colors.white10, height: 0.5, indent: 56),
               // App Store Privacy Policy item
               ListTile(
-                leading: const Icon(Icons.privacy_tip_outlined, color: Colors.white70),
-                title: Text(context.tr('Chính sách bảo mật', 'Privacy Policy'), style: const TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w600)),
-                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 12),
+                leading: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF30D158), // Green
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.privacy_tip_rounded, color: Colors.white, size: 16),
+                ),
+                title: Text(context.tr('Chính sách bảo mật', 'Privacy Policy'), style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500)),
+                trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 11),
                 onTap: () async {
                   final Uri url = Uri.parse('https://codego.io.vn/privacy_policy.html');
                   try {
@@ -648,19 +802,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 24),
 
-        // LOGOUT & DELETE ACCOUNT BUTTONS
+        // LOGOUT & DELETE ACCOUNT BUTTONS — Tràn viền, không bo góc
         ElevatedButton(
           onPressed: () => provider.logout(),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF161F30),
+            backgroundColor: const Color(0xFF1C1C1E),
             foregroundColor: Colors.white70,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-              side: BorderSide(color: Colors.white.withOpacity(0.08), width: 0.8),
+            elevation: 0,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.zero,
+              side: BorderSide(color: Colors.white10, width: 0.5),
             ),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
-          child: Text(context.tr('ĐĂNG XUẤT', 'LOG OUT'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          child: Text(context.tr('ĐĂNG XUẤT', 'LOG OUT'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.5)),
         ),
         const SizedBox(height: 12),
         // Delete Account button (Mandatory App Store Publishing requirement!)
@@ -668,7 +823,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onPressed: () => _showDeleteConfirmation(context, provider),
           child: Text(
             context.tr('XÓA TÀI KHOẢN VĨNH VIỄN', 'DELETE ACCOUNT PERMANENTLY'),
-            style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+            style: const TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.5),
           ),
         ),
       ],
@@ -676,42 +831,291 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showDeleteConfirmation(BuildContext context, AppProvider provider) {
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF161F30),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(context.tr('Xóa Tài Khoản?', 'Delete Account?'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-          content: Text(
-            context.tr(
-              'LƯU Ý: Hành động này không thể hoàn tác. Toàn bộ dữ liệu XP, Streaks và bộ sưu tập đã lưu của bạn sẽ bị xóa vĩnh viễn trên cơ sở dữ liệu để tuân thủ quyền riêng tư App Store.',
-              'WARNING: This action cannot be undone. All your XP, Streaks, and saved bookmarks will be permanently deleted from the database to comply with App Store privacy guidelines.',
+      builder: (dialogContext) {
+        return CupertinoAlertDialog(
+          title: Text(context.tr('Xóa Tài Khoản?', 'Delete Account?')),
+          content: Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              context.tr(
+                'LƯU Ý: Hành động này không thể hoàn tác. Toàn bộ dữ liệu XP, Streaks và bộ sưu tập đã lưu của bạn sẽ bị xóa vĩnh viễn trên cơ sở dữ liệu để tuân thủ quyền riêng tư App Store.',
+                'WARNING: This action cannot be undone. All your XP, Streaks, and saved bookmarks will be permanently deleted from the database to comply with App Store privacy guidelines.',
+              ),
             ),
-            style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(context.tr('HỦY', 'CANCEL'), style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold)),
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(context.tr('Hủy', 'Cancel')),
             ),
-            TextButton(
+            CupertinoDialogAction(
+              isDestructiveAction: true,
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 provider.deleteAccount().then((res) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(res['message'] ?? context.tr('Tài khoản của bạn đã được xóa vĩnh viễn.', 'Your account has been permanently deleted.')),
-                      backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
-                    ),
-                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(res['message'] ?? context.tr('Tài khoản của bạn đã được xóa vĩnh viễn.', 'Your account has been permanently deleted.')),
+                        backgroundColor: res['success'] == true ? Colors.green : Colors.redAccent,
+                      ),
+                    );
+                  }
                 });
               },
-              child: Text(context.tr('XÓA NGAY', 'DELETE NOW'), style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              child: Text(context.tr('Xóa ngay', 'Delete now')),
             ),
           ],
         );
       },
+    );
+  }
+
+  void _showLeaderboardBottomSheet(BuildContext context, AppProvider provider) {
+    provider.loadLeaderboard();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1C1C1E),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          maxChildSize: 0.95,
+          minChildSize: 0.5,
+          expand: false,
+          builder: (context, scrollController) {
+            return Consumer<AppProvider>(
+              builder: (context, prov, child) {
+                if (prov.isLoadingLeaderboard) {
+                  return const Center(child: CircularProgressIndicator(color: Color(0xFF0A84FF)));
+                }
+
+                final list = prov.leaderboard;
+                if (list.isEmpty) {
+                  return Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(width: 36, height: 5, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2.5))),
+                      const SizedBox(height: 40),
+                      Center(child: Text(context.tr('Không có dữ liệu', 'No data available'), style: const TextStyle(color: Colors.white38))),
+                    ],
+                  );
+                }
+
+                final top1 = list.isNotEmpty ? list[0] : null;
+                final top2 = list.length > 1 ? list[1] : null;
+                final top3 = list.length > 2 ? list[2] : null;
+                final remainList = list.length > 3 ? list.sublist(3) : [];
+
+                return Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Container(width: 36, height: 5, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2.5))),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset('assets/award.png', width: 22, height: 22),
+                        const SizedBox(width: 8),
+                        Text(context.tr('BẢNG XẾP HẠNG TECHFLOW', 'TECHFLOW LEADERBOARD'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1.0)),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(context.tr('Top 50 lập trình viên có điểm XP cao nhất', 'Top 50 developers with highest XP'), style: const TextStyle(fontSize: 10, color: Colors.white38)),
+                    const Divider(color: Colors.white10, height: 24),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (top2 != null) _buildPodiumUser(context, user: top2, rank: 2, avatarRadius: 28, color: const Color(0xFFC0C0C0), badgeIcon: 'assets/second-rank.png'),
+                          if (top1 != null) Padding(padding: const EdgeInsets.only(bottom: 12.0), child: _buildPodiumUser(context, user: top1, rank: 1, avatarRadius: 36, color: const Color(0xFFFFD700), badgeIcon: 'assets/award.png')),
+                          if (top3 != null) _buildPodiumUser(context, user: top3, rank: 3, avatarRadius: 26, color: const Color(0xFFCD7F32), badgeIcon: 'assets/3rd-place.png'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(color: Colors.white10, height: 1),
+                    Expanded(
+                      child: remainList.isEmpty
+                          ? Center(child: Text(context.tr('Tham gia học tập để lọt vào bảng xếp hạng!', 'Learn more to get on the leaderboard!'), style: const TextStyle(color: Colors.white24, fontSize: 11)))
+                          : ListView.builder(
+                              controller: scrollController,
+                              padding: EdgeInsets.zero,
+                              itemCount: remainList.length,
+                              itemBuilder: (context, index) {
+                                final entry = remainList[index];
+                                final rank = index + 4;
+                                final isCurrentUser = entry['user_id'].toString() == prov.userInfo?['user_id']?.toString();
+                                return Container(
+                                  color: isCurrentUser ? const Color(0xFF0A84FF).withOpacity(0.08) : Colors.transparent,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                                  child: Row(
+                                    children: [
+                                      Container(width: 28, alignment: Alignment.centerLeft, child: Text('$rank', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.white38))),
+                                      CircleAvatar(
+                                        radius: 16,
+                                        backgroundColor: const Color(0xFF0A84FF).withOpacity(0.12),
+                                        backgroundImage: (entry['avatar'] != null && entry['avatar'].toString().isNotEmpty) ? NetworkImage(entry['avatar'].toString()) : null,
+                                        child: (entry['avatar'] == null || entry['avatar'].toString().isEmpty) ? Text((entry['name'] ?? 'U').substring(0, 1).toUpperCase(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0A84FF))) : null,
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(entry['name'] ?? 'User', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, fontWeight: isCurrentUser ? FontWeight.w900 : FontWeight.w600, color: isCurrentUser ? const Color(0xFF0A84FF) : Colors.white)),
+                                            const SizedBox(height: 2),
+                                            Row(
+                                              children: [
+                                                Image.asset('assets/bonfire.png', width: 11, height: 11),
+                                                const SizedBox(width: 2),
+                                                Text('${entry['current_streak'] ?? 0} ${context.tr('ngày', 'days')}', style: const TextStyle(fontSize: 10, color: Colors.white38)),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Text('${entry['total_points'] ?? 0} XP', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: isCurrentUser ? const Color(0xFF0A84FF) : const Color(0xFFFF9F0A))),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // WIDGET HELPER RENDER TỪNG USER PODIUM
+  Widget _buildPodiumUser(
+    BuildContext context, {
+    required dynamic user,
+    required int rank,
+    required double avatarRadius,
+    required Color color,
+    required String badgeIcon,
+  }) {
+    final String displayName = user['name'] ?? 'User';
+    final int points = user['total_points'] ?? 0;
+    final int streak = user['current_streak'] ?? 0;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Avatar Stack with Krone / Badge
+        Stack(
+          alignment: Alignment.topCenter,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: rank == 1 ? 2.5 : 1.5),
+                boxShadow: rank == 1
+                    ? [
+                        BoxShadow(
+                          color: color.withOpacity(0.3),
+                          blurRadius: 14,
+                          spreadRadius: 2,
+                        )
+                      ]
+                    : null,
+              ),
+              child: CircleAvatar(
+                radius: avatarRadius,
+                backgroundColor: color.withOpacity(0.12),
+                backgroundImage: (user['avatar'] != null && user['avatar'].toString().isNotEmpty)
+                    ? NetworkImage(user['avatar'].toString())
+                    : null,
+                child: (user['avatar'] == null || user['avatar'].toString().isEmpty)
+                    ? Text(
+                        displayName.substring(0, 1).toUpperCase(),
+                        style: TextStyle(
+                          fontSize: avatarRadius * 0.7,
+                          fontWeight: FontWeight.w900,
+                          color: color,
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+            // Badge Cup Icon - Đặt ở đỉnh đầu (Top)
+            Positioned(
+              top: rank == 1 ? -16 : -12,
+              child: Image.asset(
+                badgeIcon,
+                width: rank == 1 ? 24 : 20,
+                height: rank == 1 ? 24 : 20,
+                errorBuilder: (context, error, stackTrace) {
+                  IconData fallbackIcon = Icons.stars_rounded;
+                  if (rank == 1) fallbackIcon = Icons.emoji_events_rounded;
+                  return Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1C1C1E),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: color, width: 1.0),
+                    ),
+                    child: Icon(fallbackIcon, size: rank == 1 ? 14 : 10, color: color),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Name
+        Container(
+          constraints: const BoxConstraints(maxWidth: 85),
+          child: Text(
+            displayName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        // Points
+        Text(
+          '$points XP',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 2),
+        // Streak line
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset('assets/bonfire.png', width: 10, height: 10),
+            Text(
+              ' $streak',
+              style: const TextStyle(fontSize: 9, color: Colors.white38, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
